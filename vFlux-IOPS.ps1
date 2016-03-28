@@ -27,7 +27,7 @@
         download curl.exe for Windows in order for Powershell to write to InfluxDB.
 
     .PARAMETER vCenter
-     The name or IP address of the vCenter Server to connect to
+     	The name or IP address of the vCenter Server to connect to
     
     .PARAMETER ShowStats
         Optionally show some debug info on the writes to InfluxDB
