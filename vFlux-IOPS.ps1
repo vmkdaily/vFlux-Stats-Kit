@@ -2,21 +2,21 @@
 <#	
 	.NOTES
     =========================================================================================================
-        Filename:		vFlux-IOPS.ps1
-        Version:		0.1c 
-        Created:		12/21/2015
-	    Updated:		27March2016
-	    Requires:       curl.exe for Windows (https://curl.haxx.se/download.html)
-	    Requires:       InfluxDB 0.9.4 or later.  The latest 0.10.x is preferred.
+        Filename:	vFlux-IOPS.ps1
+        Version:	0.1c 
+        Created:	12/21/2015
+	Updated:	27March2016
+	Requires:       curl.exe for Windows (https://curl.haxx.se/download.html)
+	Requires:       InfluxDB 0.9.4 or later.  The latest 0.10.x is preferred.
         Requires:       Grafana 2.5 or later.  The latest 2.6.x is preferred.
         Prior Art:      Based on the get-stat technique often illustrated by @Lucd
         Prior Art:      Uses MattHodge's InfluxDB write protocol syntax 
-	    Author:         Mike Nisk (a.k.a. 'grasshopper')
-	    Twitter:		@vmkdaily
+	Author:         Mike Nisk (a.k.a. 'grasshopper')
+	Twitter:	@vmkdaily
 	=========================================================================================================
 	
     .SYNOPSIS
-		Gathers VMware vSphere virtual machine disk stats and writes them to InfluxDB.  This script understands
+	Gathers VMware vSphere virtual machine disk stats and writes them to InfluxDB.  This script understands
         NFS and VMFS and gathers the appropriate stat type accordingly.
 
     .DESCRIPTION
@@ -26,8 +26,8 @@
         Please note that we use curl.exe for InfluxDB line protocol writes.  This means you must
         download curl.exe for Windows in order for Powershell to write to InfluxDB.
 
-	.PARAMETER vCenter
-        The name or IP address of the vCenter Server to connect to
+    .PARAMETER vCenter
+     The name or IP address of the vCenter Server to connect to
     
     .PARAMETER ShowStats
         Optionally show some debug info on the writes to InfluxDB
@@ -53,7 +53,7 @@ Begin {
 
     ## User-Defined Influx Setup
     $InfluxStruct = New-Object -TypeName PSObject -Property @{
-	    CurlPath = 'C:\Windows\System32\curl.exe';
+	CurlPath = 'C:\Windows\System32\curl.exe';
         InfluxDbServer = '1.2.3.4'; #IP Address
         InfluxDbPort = 8086;
         InfluxDbName = 'iops';
