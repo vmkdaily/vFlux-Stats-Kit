@@ -20,7 +20,7 @@
         Use this to get CPU, Memory and Network stats for VMs or ESXi hosts.
         Note:  For disk performance metrics, see my vFlux-IOPS script.
 
-     .DESCRIPTION
+    .DESCRIPTION
         This PowerCLI script supports InfluxDB 0.9.4 and later (including the latest 0.10.x).
         The InfluxDB write syntax is based on naf_perfmon_to_influxdb.ps1 by D'Haese Willem,
         which itself is based on MattHodge's Graphite-PowerShell-Functions.
