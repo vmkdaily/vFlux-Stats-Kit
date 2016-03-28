@@ -12,5 +12,5 @@ http://vmkdaily.ghost.io/influxdb-and-grafana-on-centos/
 
 I will be adding more supporting materials soon (blogs, videos, etc.). If you need help, hit me up on twitter.
 
-Mike
+Mike<br>
 @vmkdaily
