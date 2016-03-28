@@ -1,22 +1,22 @@
 ﻿
 <#	
-	.NOTES
-    =========================================================================================================
-        Filename:		vFlux-Compute.ps1
-        Version:		0.1c 
-        Created:		12/21/2015
-	    Updated:		28March2016
+    .NOTES
+	=========================================================================================================
+        Filename:	vFlux-Compute.ps1
+        Version:	0.1c 
+        Created:	12/21/2015
+	Updated:	28March2016
         Requires:       curl.exe for Windows (https://curl.haxx.se/download.html)
-	    Requires:       InfluxDB 0.9.4 or later.  The latest 0.10.x is preferred.
+	Requires:       InfluxDB 0.9.4 or later.  The latest 0.10.x is preferred.
         Requires:       Grafana 2.5 or later.  The latest 2.6 is preferred.
-	    Prior Art:      Based on the get-stat technique often illustrated by @Lucd
+	Prior Art:      Based on the get-stat technique often illustrated by @Lucd
         Prior Art:      Uses MattHodge's InfluxDB write protocol syntax 
-	    Author:         Mike Nisk (a.k.a. 'grasshopper')
-	    Twitter:		@vmkdaily
+	Author:         Mike Nisk (a.k.a. 'grasshopper')
+	Twitter:	@vmkdaily
 	=========================================================================================================
 	
     .SYNOPSIS
-		Gathers VMware vSphere 'Compute' performance stats and writes them to InfluxDB.
+	Gathers VMware vSphere 'Compute' performance stats and writes them to InfluxDB.
         Use this to get CPU, Memory and Network stats for VMs or ESXi hosts.
         Note:  For disk performance metrics, see my vFlux-IOPS script.
 
@@ -39,18 +39,18 @@
     .PARAMETER ShowStats
         Optionally show some debug info on the writes to InfluxDB
 
-	.EXAMPLE
-        vFlux-Compute.ps1 -vCenter <VC Name or IP> -ReportVMs
-
     .EXAMPLE
-		vFlux-Compute.ps1 -vCenter <VC Name or IP> -ReportVMHosts
+    	vFlux-Compute.ps1 -vCenter <VC Name or IP> -ReportVMs
+    	
+    .EXAMPLE
+    	vFlux-Compute.ps1 -vCenter <VC Name or IP> -ReportVMHosts
 
 #>
 
 [cmdletbinding()]
 param (
     [Parameter(Mandatory = $True)]
-	[String]$vCenter,
+    [String]$vCenter,
 
     [Parameter(Mandatory = $False)]
     [switch]$ReportVMs,
@@ -66,7 +66,7 @@ Begin {
 
     ## User-Defined Influx Setup
     $InfluxStruct = New-Object -TypeName PSObject -Property @{
-	    CurlPath = 'C:\Windows\System32\curl.exe';
+	CurlPath = 'C:\Windows\System32\curl.exe';
         InfluxDbServer = '1.2.3.4'; #IP Address
         InfluxDbPort = 8086;
         InfluxDbName = 'compute';
@@ -190,7 +190,6 @@ Process {
 	                }
                }
     }
-
 
     If($ReportVMHosts) {
 
