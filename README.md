@@ -4,7 +4,7 @@ PowerCLI scripts to gather VMware performance stats and write them to InfluxDB.
 ## Introduction
 Welcome to the vFlux Stats kit!  Use these scripts to gather VMware Sphere performance stats and write them to the InfluxDB time series database.  Then, display your metrics in all their glory through the Grafana web interface.
 
-## Versions:
+## Versions
 This kit supports the latest InfluxDB v0.11 and latest Grafana 2.6, on both Windows or Linux.  For best performance use the latest Powershell and PowerCLI.
 
 ## Requirements
@@ -46,12 +46,12 @@ I created a derived metric called %READY Health.  It multiplies the "acceptable"
 
 In the above example of %READY of .80, if the VM has 8 vCPU, it's %READY health will be .80.  This is the difference between 8 * .20 and the current reading of .80.
 
-### My Guides
+## My Guides
 [How To Guide - Installing InfluxDB and Grafana on CentOS 7](http://vmkdaily.ghost.io/influxdb-and-grafana-on-centos/)<br>
-How To Guide - Deploying InfluxDB and Grafana on Windows [coming soon]
-How To Guide - Customizing Charts in Grafana [coming soon]
+How To Guide - Deploying InfluxDB and Grafana on Windows [coming soon]<br>
+How To Guide - Customizing Charts in Grafana [coming soon]<br>
 
-### Stat Gallery
+## Stat Gallery
 [coming soon]
 
 Mike<br>
