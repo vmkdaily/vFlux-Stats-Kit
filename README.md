@@ -16,7 +16,7 @@ http://vmkdaily.ghost.io/influxdb-and-grafana-on-centos/
 ## Inspiration
 This project was inspired by (but not based on) a post by @chriswahl with his [Building a dashboard with grafana and powercli](http://wahlnetwork.com/2015/04/29/building-a-dashboard-with-grafana-influxdb-and-powercli/) and [the associated github content](https://github.com/WahlNetwork/grafana-vsphere-lab).  Some really nice Powershell doing JSON writes to v0.8.  However, by the the time I got to try that, the JSON writes were deprecated for InfluxDB Line Protocol.
 
-So next, I stumbled upon some great prior art from @willemdh known as [naf windows perfmon to influxdb](https://github.com/willemdh/naf_windows_perfmon_to_influxdb/blob/master/naf_windows_perfmon_to_influxdb.ps1). His work, is based on [Graphite Powershell Functions](https://github.com/MattHodge/Graphite-PowerShell-Functions) by MattHodge.  I borrowed their technique for performing InfluxDB writes using curl.exe for Windows.
+So next, I stumbled upon some great prior art from @willemdh known as [naf windows perfmon to influxdb](https://github.com/willemdh/naf_windows_perfmon_to_influxdb/blob/master/naf_windows_perfmon_to_influxdb.ps1). His work, is based on [Graphite Powershell Functions](https://github.com/MattHodge/Graphite-PowerShell-Functions) by @MattHodge.  I borrowed their technique for performing InfluxDB writes using curl.exe for Windows.
 
 I also use some hashing techniques from Luc Dekens.
 
@@ -52,7 +52,18 @@ How To Guide - Deploying InfluxDB and Grafana on Windows [coming soon]<br>
 How To Guide - Customizing Charts in Grafana [coming soon]<br>
 
 ## Stat Gallery
-[coming soon]
+Following are some dashboards examples.
+<br>
+
+![NFS Stats](vFlux\ Stats\ Example\ -\ Virtual\ Machine\ NFS\ Disk\ Performance.png)
+
+<br>
+![Block Stats](vFlux\ Stats\ Example\ -\ Virtual\ Machine\ Block\ Disk\ Performance.png)
+
+<br>
+![CPU Stats](vFlux-Compute-VM-vCPU-Stats-Example.png)
+
+<br>
 
 Mike<br>
 @vmkdaily
