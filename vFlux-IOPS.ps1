@@ -9,7 +9,7 @@
 	Requires:       curl.exe for Windows (https://curl.haxx.se/download.html)
 	Requires:       InfluxDB 0.9.4 or later.  The latest 0.10.x is preferred.
         Requires:       Grafana 2.5 or later.  The latest 2.6.x is preferred.
-        Prior Art:      Based on the get-stat technique often illustrated by @Lucd
+        Prior Art:      Based on the get-stat technique often illustrated by Luc Dekens
         Prior Art:      Uses MattHodge's InfluxDB write protocol syntax 
 	Author:         Mike Nisk (a.k.a. 'grasshopper')
 	Twitter:	@vmkdaily
