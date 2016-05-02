@@ -7,6 +7,9 @@ Welcome to the vFlux Stats kit.  Use these scripts to gather VMware Sphere perfo
 ## Versions
 This kit supports the latest InfluxDB v0.11 and latest Grafana 2.6, on both Windows or Linux.  For best performance use the latest Powershell and PowerCLI.
 
+## VMware VSAN
+This kit does not support VMware VSAN stats.  If you need those feel free to write your own using the API or use the amazing and simple pre-made appliance by [Sexi Graf](http://www.sexigraf.fr/).
+
 ## Requirements
 You'll need at least one Windows box with VMware PowerCLI installed.  This should be a dependable device as you will likely run this as a scheduled task.<br>
 
