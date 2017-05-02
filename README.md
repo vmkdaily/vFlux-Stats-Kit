@@ -58,19 +58,5 @@ In the above example of %READY of .80, if the VM has 8 vCPU, it's %READY health 
 How To Guide - Deploying InfluxDB and Grafana on Windows [coming soon]<br>
 How To Guide - Customizing Charts in Grafana [coming soon]<br>
 
-## Stat Gallery
-Following are some dashboards examples.
-<br>
-
-![NFS Stats](vFlux\ Stats\ Example\ -\ Virtual\ Machine\ NFS\ Disk\ Performance.png)
-
-<br>
-![Block Stats](vFlux\ Stats\ Example\ -\ Virtual\ Machine\ Block\ Disk\ Performance.png)
-
-<br>
-![CPU Stats](vFlux-Compute-VM-vCPU-Stats-Example.png)
-
-<br>
-
 Mike<br>
 @vmkdaily
