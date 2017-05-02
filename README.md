@@ -1,3 +1,7 @@
+Note:  The following readme covers the original approach using Curl.exe.  The new approach available in the sneak preview files, uses REST for Influx Line Protocol Writes.  The sneak preview files that use REST are Invoke-vFluxCompute.ps1 and Invoke-vFluxIOPS.ps1.  I also included a Powershell script to help download the bits (Get-vFluxBits.ps1).
+
+On to the original readme...
+
 # vFlux-Stats-Kit
 PowerCLI scripts to gather VMware performance stats and write them to InfluxDB.
 
