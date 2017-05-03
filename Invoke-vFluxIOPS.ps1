@@ -5,7 +5,7 @@
     .DESCRIPTION
       Gathers VMware vSphere virtual machine disk stats and writes them to InfluxDB.
       Understands both NFS and VMFS and gathers the appropriate stat type accordingly.
-      Does not support returning of vSAN stats.
+      Does not support returning of vSAN stats. 
 
     .NOTES
       Filename:	      Invoke-vFluxIOPS.ps1
@@ -337,26 +337,3 @@ End {
   Write-Verbose -Message 'Script complete.'
   If ($Logging -eq 'On') { Stop-Transcript }
 }
-# SIG # Begin signature block
-# MIID0gYJKoZIhvcNAQcCoIIDwzCCA78CAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
-# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU0aTBhbeVW06JyvK+2NgSTAwK
-# uz+gggH1MIIB8TCCAVqgAwIBAgIQfM/Y1fwj14VB8I/2wwfNfzANBgkqhkiG9w0B
-# AQUFADATMREwDwYDVQQDDAh2bWtkYWlseTAeFw0xNzA0MDYwODE3MjdaFw0yMTA0
-# MDYwMDAwMDBaMBMxETAPBgNVBAMMCHZta2RhaWx5MIGfMA0GCSqGSIb3DQEBAQUA
-# A4GNADCBiQKBgQD0SkANle+2QGLFh+/X91xVy11hIZvCzLA4+X/1KmLrT4zye0tw
-# 0w63OY+5Xfr/4IbOzb9sYkFg9oJ8dRIhevfSXbKapty2vAzjEfBL9lhpy9BdcPYx
-# GhNgJkFScxGssnMBWwIwdSczwTrANFOrKYmZVb0SU2ywGsRN818lg2XAHwIDAQAB
-# o0YwRDATBgNVHSUEDDAKBggrBgEFBQcDAzAdBgNVHQ4EFgQUMhGkGgSixn055zx0
-# eFeJfrcw1SkwDgYDVR0PAQH/BAQDAgeAMA0GCSqGSIb3DQEBBQUAA4GBADr78SvQ
-# XCDEi/f1UD0jStFhP2XksDI30f+PogvEQPXAnukT9d6fgRXl9bubo6N5QYLIQbWj
-# uL9y6gXSStQ/+jia11MeS2cVsO5KHkMBLOuqswVBxiQdlT6O/7bw4eOAL6g/+ym5
-# +JVe8Zeo1mNpiEuSspqgsAtvUdL76TXihxdnMYIBRzCCAUMCAQEwJzATMREwDwYD
-# VQQDDAh2bWtkYWlseQIQfM/Y1fwj14VB8I/2wwfNfzAJBgUrDgMCGgUAoHgwGAYK
-# KwYBBAGCNwIBDDEKMAigAoAAoQKAADAZBgkqhkiG9w0BCQMxDAYKKwYBBAGCNwIB
-# BDAcBgorBgEEAYI3AgELMQ4wDAYKKwYBBAGCNwIBFTAjBgkqhkiG9w0BCQQxFgQU
-# 8Byq7iVivlkY6FNMTGM6bOKhWcUwDQYJKoZIhvcNAQEBBQAEgYAgBzVXmSeiHIb4
-# H5/6ziXEBNefyRF2kJPVSMNcNrNI9ogLuLVSzJwOf7r3fsCdGJ3QWKseyGmvEQMy
-# 3lCzba4mj17CFTE97YC196onPm64zazGcgcZ5bN2LCK3i3v8wK48GajiX7eEya3n
-# p3mxxPibzmGQB+GqekSMyj2huPe5Bw==
-# SIG # End signature block

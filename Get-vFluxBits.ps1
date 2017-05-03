@@ -98,12 +98,6 @@
     #If we don't specify paths, all binaries go to the default of $Env:Temp.
     #If a path doesn't exist, we create it (if allowed).
 
-    ABOUT SCRIPT SIGNING
-
-      Ths script has a digital signature to protect it in transit.
-      If you modify the script, simply remove the block of text at the very bottom.
-      Optionally, you can re-sign the script if desired (not required).
-
     CONTRIBUTE
 
       Things you can do for fun or to help out:
