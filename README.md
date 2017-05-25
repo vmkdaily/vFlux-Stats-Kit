@@ -9,7 +9,9 @@ PowerCLI scripts to gather VMware performance stats and write them to InfluxDB.
 Welcome to the vFlux Stats kit.  Use these scripts to gather VMware Sphere performance stats and write them to the InfluxDB time series database.  Then, display your metrics in all their glory through the Grafana web interface.
 
 ## License
-Copyright 2015-2017 vmkdaily
+MIT License
+
+Copyright (c) 2015 - present vmkdaily
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
