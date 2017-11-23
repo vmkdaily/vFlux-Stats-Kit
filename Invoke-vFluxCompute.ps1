@@ -92,7 +92,7 @@ Begin {
   $InfluxStruct = New-Object -TypeName PSObject -Property @{
     InfluxDbServer             = 'localhost'                                   #IP Address,DNS Name, or 'localhost'
     InfluxDbPort               = 8086                                          #default for InfluxDB is 8086
-    InfluxDbName               = 'test'                                        #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
+    InfluxDbName               = 'compute'                                     #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
     InfluxDbUser               = 'esx'                                         #to follow my examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI
     InfluxDbPassword           = 'esx'                                         #to follow my examples, set to 'esx' here [see above example to create InfluxDB user and set password at the same time]
     MetricsString              = ''                                            #empty string that we populate later
