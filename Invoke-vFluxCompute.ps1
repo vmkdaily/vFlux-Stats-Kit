@@ -5,17 +5,16 @@
     .DESCRIPTION
       Gathers VMware vSphere 'Compute' performance stats and writes them to InfluxDB.
       Use this to get CPU, Memory and Network stats for VMs or ESXi hosts.
-      Note:  For disk performance metrics, see my Invoke-vFluxIOPS.ps1 script.
+      Note:  For disk performance metrics, see my Invoke-vFluxIOPS script.
 
     .NOTES
       Filename:	      Invoke-vFluxCompute.ps1
-      Version:	      0.3
+      Version:	      0.4
       Author:         Mike Nisk
       Organization:	  vmkdaily
-      Updated:	      23April2017
-      Tested On:      InfluxDB 1.2.2, Grafana 4.1.2, Powershell 5.1, VMware PowerCLI 6.5
-      Requires:       PowerShell 3.0 or later
-      Requires:       VMware PowerCLI 5.0 to 6.5
+      Tested On:      InfluxDB 1.2.2, Grafana 4.1.2, Powershell 5.1, VMware PowerCLI 6.5.4
+      Requires:       PowerShell 3.0 or later (PowerShell 5.1 preferred)
+      Requires:       VMware PowerCLI 5.0 or later (PowerCLI 6.5.4 or later preferred)
       Prior Art:      Inspired by, and/or snippets borrowed from:
                       Chris Wahl      -  Initial project idea and PowerCLI loader
                       Luc Dekens      -  Syntax to get datastore names and get-stat handling
@@ -33,7 +32,10 @@
       -  Changed script name to comply with PowerShell standards
       -  Changed vCenter parameter to Computer
       -  Added better Verbose handling
-      -  Add support for spaces in VM names [TODO]
+      version 0.4 - 22Nov2017
+      -  Added support for spaces in VM names
+      -  Added support for spaces in Cluster names
+      -  Updated the PowerCLI loader to quietly do nothing if VMware.PowerCLI exists
 
 
     .PARAMETER Computer
@@ -63,8 +65,8 @@
     //TODO - Perform get-stat in one go,
     and use Group-Object.
 
-    //TODO - Add params for stat types
-
+    //TODO - Add params for stat types or a switch to allow autoselect all available stats.
+    
 #>
 
 [cmdletbinding()]
@@ -74,7 +76,7 @@ param (
   [Parameter(Mandatory,HelpMessage='vCenter Name or IP Address')]
   [String]$Computer,
 
-  #Switch.  Activate this switch to report or VMs
+  #Switch.  Activate this switch to report on VMs
   [switch]$ReportVMs,
 
   #Switch.  Activate this switch to report on ESX hosts
@@ -86,23 +88,25 @@ param (
 
 Begin {
 
-  ## User-Defined Influx Setup
+  ## InfluxDB Prefs
   $InfluxStruct = New-Object -TypeName PSObject -Property @{
-    InfluxDbServer           = 'localhost'                      #IP Address,DNS Name, or 'localhost'
-    InfluxDbPort             = 8086                             #default for InfluxDB is 8086
-    InfluxDbName             = 'compute'                        #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
-    InfluxDbUser             = 'esx'                            #to follow my examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI
-    InfluxDbPassword         = 'esx'                            #to follow my examples, set to 'esx' here 
-    MetricsString            = ''                               #empty string that we populate later
+    InfluxDbServer             = 'localhost'                                   #IP Address,DNS Name, or 'localhost'
+    InfluxDbPort               = 8086                                          #default for InfluxDB is 8086
+    InfluxDbName               = 'test'                                        #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
+    InfluxDbUser               = 'esx'                                         #to follow my examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI
+    InfluxDbPassword           = 'esx'                                         #to follow my examples, set to 'esx' here [see above example to create InfluxDB user and set password at the same time]
+    MetricsString              = ''                                            #empty string that we populate later
   }
 
-  ## User-Defined Preferences
-  [string]$Logging           = 'off'                            #string.  Options are 'On' or 'Off'
-  [string]$LogDir            = $env:Temp                        #default is ok.  Optionally, set to something like 'c:\logs'
-  [string]$LogName           = 'vFlux-Compute'                  #leaf of the name.  We add extension later.  This is the PowerShell transcript log file to create, if any
-  [datetime]$dt              = Get-Date -Format 'ddMMMyyyy'     #creates one log file per day
-  [bool]$ShowRestConnections = $true                            #if true (default), and we're running in verbose mode, REST connection detail is returned
-    
+  ## User Prefs
+  [string]$Logging             = 'On'                                          #string.  Options are 'On' or 'Off'
+  [string]$LogDir              = $Env:Temp                                     #default is ok.  Optionally, set to something like 'c:\logs'
+  [string]$LogName             = 'Invoke-vFluxCompute-log'                     #leaf of the name.  We add extension later.  This is the PowerShell transcript log file to create, if any
+  [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #creates one log file per day
+  [bool]$ShowRestConnections   = $true                                         #if true (default), and we're running in verbose mode, REST connection detail is returned
+  [string]$DisplayNameSpacer   = '\ '                                          #handle spaces in virtual machine DisplayName by replacing with desired character (i.e. '_' which results in an underscore)
+  [string]$ClusterNameSpacer   = '\ '                                          #handle spaces in vSphere cluster name by replacing with desired character (i.e. '\ ' which results in a space)
+  
   ## stat preferences
   $VmStatTypes  = 'cpu.usage.average','cpu.usagemhz.average','mem.usage.average','net.usage.average','cpu.ready.summation'  
   $EsxStatTypes = 'cpu.usage.average','cpu.usagemhz.average','mem.usage.average','net.usage.average','cpu.ready.summation','disk.usage.average'
@@ -121,30 +125,39 @@ Begin {
 
   ## Start Logging
   If ($Logging -eq 'On') {
-    Start-Transcript -Append -Path $LogDir\$LogName-$dt.log
+    Start-Transcript -Append -Path "$LogDir\$LogName-$dt.log"
   }
 
 } #End Begin
 
 Process {
 
-  ## Import PowerCLI Modules and/or snapins
-  $vMods = Get-Module -Name VMware* -ListAvailable -Verbose:$false
-  If($vMods) {
-    foreach ($mod in $vMods) {
-      Import-Module -Name $mod -ErrorAction Stop -Verbose:$false
+  #Import PowerCLI module/snapin if needed.
+  If(-Not(Get-Module -Name VMware.PowerCLI -ListAvailable -ErrorAction SilentlyContinue)){
+    
+    #In case its not autoloading
+    try{
+      $null = Get-Module -ListAvailable -Name VMware.PowerCLI | Import-Module -ErrorAction Stop
     }
-    Write-Verbose -Message 'PowerCLI 6.x Module(s) imported.'
-  }
-  Else {
-    If(!(Get-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-      Try {
-        Add-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction Stop
-        Write-Verbose -Message 'PowerCLI 5.x Snapin added; recommend upgrading to PowerCLI 6.x'
+    catch{
+      $vMods = Get-Module -Name VMware.* -ListAvailable -Verbose:$false
+      If($vMods) {
+        foreach ($mod in $vMods) {
+          Import-Module -Name $mod -ErrorAction Stop -Verbose:$false
+        }
+        Write-Verbose -Message 'PowerCLI 6.x Module(s) imported.'
       }
-      Catch {
-        Write-Warning -Message 'Could not load PowerCLI'
-        Throw 'PowerCLI 5 or later required'
+      Else {
+        If(!(Get-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+          Try {
+            Add-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction Stop
+            Write-Verbose -Message 'PowerCLI 5.x Snapin added; recommend upgrading to PowerCLI 6.x'
+          }
+          Catch {
+            Write-Warning -Message 'Could not load PowerCLI'
+            Throw 'PowerCLI 5 or later required'
+          }
+        }
       }
     }
   }
@@ -178,20 +191,20 @@ Process {
     
       ## Gather desired stats
       $stats = Get-Stat -Entity $vm -Stat $VMStatTypes -Realtime -MaxSamples 1
-      #$stats = Get-Stat -Entity $vm -Realtime -MaxSamples 1 -ErrorAction SilentlyContinue
+      
       foreach ($stat in $stats) {
             
         ## Create and populate variables for the purpose of writing to InfluxDB Line Protocol
         $measurement = $stat.MetricId
         $value = $stat.Value
-        $name = $vm.Name
+        $name = ($vm | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
         $type = 'VM'
         $numcpu = $vm.ExtensionData.Config.Hardware.NumCPU
         $memorygb = $vm.ExtensionData.Config.Hardware.MemoryMB/1KB
         $interval = $stat.IntervalSecs
         $unit = $stat.Unit
         $vc = ($global:DefaultVIServer).Name
-        $cluster = $vm.VMHost.Parent
+        $cluster = ($vm.VMHost.Parent | Select-Object -ExpandProperty Name) -replace ' ',$ClusterNameSpacer
         [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
 
         ## handle instance
@@ -278,12 +291,12 @@ Process {
         ## Create and populate variables for the purpose of writing to InfluxDB Line Protocol
         $measurement = $stat.MetricId
         $value = $stat.Value
-        $name = $EsxImpl.Name
+        $name = $EsxImpl | Select-Object -ExpandProperty Name
         $type = 'VMHost'
         $interval = $stat.IntervalSecs
         $unit = $stat.Unit
         $vc = ($global:DefaultVIServer).Name
-        $cluster = $EsxImpl.Parent
+        $cluster = ($EsxImpl.Parent | Select-Object -ExpandProperty Name) -replace ' ',$ClusterNameSpacer
         [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
 
         ##handle instance
