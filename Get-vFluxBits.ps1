@@ -11,10 +11,9 @@
 
     .NOTES
       Filename:	      Get-vFluxBits.ps1
-      Version:	      0.3
+      Version:	      0.4
       Author:         Mike Nisk
       Organization:	  vmkdaily
-      Updated:	      22April2017
     
     .PARAMETER DownloadType
       String. What to download. Choose from InfluxDB, Grafana, NSSM, or All.
