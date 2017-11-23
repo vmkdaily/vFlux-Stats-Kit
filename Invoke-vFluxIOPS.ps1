@@ -9,13 +9,12 @@
 
     .NOTES
       Filename:	      Invoke-vFluxIOPS.ps1
-      Version:	      0.3
+      Version:	      0.4
       Author:         Mike Nisk
       Organization:	  vmkdaily
-      Updated:	      23April2017
-      Tested On:      InfluxDB 1.2.2, Grafana 4.1.2, Microsoft Powershell 5.1, VMware PowerCLI 6.5
-      Requires:       PowerShell 3.0 or later
-      Requires:       VMware PowerCLI 5.0 to 6.5
+      Tested On:      InfluxDB 1.2.2, Grafana 4.1.2, Microsoft Powershell 5.1, VMware PowerCLI 6.5.4
+      Requires:       PowerShell 3.0 or later (PowerShell 5.1 preferred)
+      Requires:       VMware PowerCLI 5.0 or later (PowerCLI 6.5.4 or later preferred)
       Prior Art:      Inspired by and/or snippets taken from:
                       Chris Wahl      -  Initial project idea and PowerCLI loader
                       Luc Dekens      -  Syntax to get datastore names and get-stat handling
@@ -32,8 +31,11 @@
           -  Added support for PowerCLI 6.5
           -  Changed script name to comply with PowerShell verb-noun standards
           -  Changed vCenter parameter to Computer
-          -  Added better Verbose handling
-          -  Add support for spaces in VM names [TODO]
+          -  Added better Verbose handling   
+      version 0.4 - 22Nov2017
+          -  Added support for spaces in VM names
+          -  Added support for spaces in Cluster names
+          -  Updated the PowerCLI loader to quietly do nothing if VMware.PowerCLI exists
 
     .PARAMETER Computer
       String. The IP Address or DNS name of the vCenter Server machine.
@@ -70,23 +72,25 @@ param (
 
 Begin {
 
-    ## User-Defined Influx Setup
+    ## InfluxDB Prefs
     $InfluxStruct = New-Object -TypeName PSObject -Property @{
-        InfluxDbServer            = 'localhost'                      #IP Address,DNS Name, or 'localhost'
-        InfluxDbPort              = 8086                             #default for InfluxDB is 8086
-        InfluxDbName              = 'iops'                           #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
-        InfluxDbUser              = 'esx'                            #to follow my examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI
-        InfluxDbPassword          = 'esx'                            #to follow my examples, set to 'esx' [requires user pw set in Influx CLI or similar]
-        MetricsString             = ''                               #empty string that we populate later.
+        InfluxDbServer           = 'localhost'                                    #IP Address,DNS Name, or 'localhost'
+        InfluxDbPort             = 8086                                           #default for InfluxDB is 8086
+        InfluxDbName             = 'iops'                                         #to follow my examples, set to 'iops' here and run "CREATE DATABASE iops" from Influx CLI
+        InfluxDbUser             = 'esx'                                          #to follow my examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI
+        InfluxDbPassword         = 'esx'                                          #to follow my examples, set to 'esx' [see above example to create InfluxDB user and set password at the same time]
+        MetricsString            = ''                                             #empty string that we populate later.
     }
 
-    ## User-Defined Preferences
-    [string]$Logging              = 'off'                            #string.  Options are 'On' or 'Off'
-    [string]$LogDir               = $env:Temp                        #default is ok.  Optionally, set to something like 'c:\logs'
-    [string]$LogName              = 'vFlux-IOPS'                     #leaf of the name.  We add extension later.  This is the PowerShell transcript log file to create, if any
-    [datetime]$dt                 =  Get-Date -Format 'ddMMMyyyy'    #creates one log file per day
-    [bool]$ShowRestConnections    = $true                            #if true (default), and we're running in verbose mode, REST connection detail is returned
-    
+    ## User Prefs
+    [string]$Logging             = 'On'                                           #string.  Options are 'On' or 'Off'
+    [string]$LogDir              = $Env:Temp                                      #default is ok.  Optionally, set to something like 'c:\logs'
+    [string]$LogName             = 'vFlux-IOPS'                                   #leaf of the name.  We add extension later.  This is the PowerShell transcript log file to create, if any
+    [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String    #creates one log file per day
+    [bool]$ShowRestConnections   = $true                                          #if true (default), and we're running in verbose mode, REST connection detail is returned
+    [string]$DisplayNameSpacer   = '\ '                                           #handle spaces in virtual machine DisplayName by replacing with desired character (i.e. '_' which results in an underscore)
+    [string]$ClusterNameSpacer   = '\ '                                           #handle spaces in vSphere cluster name by replacing with desired character (i.e. '\ ' which results in a space)
+
     ## stat preferences
     $BlockStatTypes = 'disk.maxTotalLatency.latest','disk.numberread.summation','disk.numberwrite.summation'
     $NfsStatTypes = 'virtualdisk.numberreadaveraged.average','virtualdisk.numberwriteaveraged.average','virtualDisk.readLatencyUS.latest','virtualDisk.writeLatencyUS.latest'
@@ -116,32 +120,33 @@ Begin {
 
     ## Start Logging
     If ($Logging -eq 'On') {
-        Start-Transcript -Append -Path $LogDir\$LogName-$dt.log
+        Start-Transcript -Append -Path "$LogDir\$LogName-$dt.log"
     }
 
 } #End Begin
  
 Process {
 
-    ## Import PowerCLI Modules and/or snapins
-    ## based on loader from wahl network
-    ## http://wahlnetwork.com/2015/04/13/powercli-modules-snapins/
-    $vMods = Get-Module -Name VMware* -ListAvailable -Verbose:$false
-    If($vMods) {
-      foreach ($mod in $vMods) {
-        Import-Module -Name $mod -ErrorAction Stop -Verbose:$false
-      }
-      Write-Verbose -Message 'PowerCLI 6.x Module(s) imported.'
-    }
-    Else {
-      If(!(Get-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-        Try {
-          Add-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction Stop
-          Write-Verbose -Message 'PowerCLI 5.x Snapin added; recommend upgrading to PowerCLI 6.x'
+    
+    #Import PowerCLI module/snapin if needed
+    If(-Not(Get-Module -Name VMware.PowerCLI -ListAvailable -ErrorAction SilentlyContinue)){
+      $vMods = Get-Module -Name VMware.* -ListAvailable -Verbose:$false
+      If($vMods) {
+        foreach ($mod in $vMods) {
+          Import-Module -Name $mod -ErrorAction Stop -Verbose:$false
         }
-        Catch {
-          Write-Warning -Message 'Could not load PowerCLI'
-          Throw 'PowerCLI 5 or later required'
+        Write-Verbose -Message 'PowerCLI 6.x Module(s) imported.'
+      }
+      Else {
+        If(!(Get-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+          Try {
+            Add-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction Stop
+            Write-Verbose -Message 'PowerCLI 5.x Snapin added; recommend upgrading to PowerCLI 6.x'
+          }
+          Catch {
+            Write-Warning -Message 'Could not load PowerCLI'
+            Throw 'PowerCLI 5 or later required'
+          }
         }
       }
     }
@@ -215,10 +220,10 @@ Process {
             
                 ## Create and populate variables for the purpose of writing to InfluxDB Line Protocol
                 $measurement = $stat.MetricId
-                $name = $vm.Name
+                $name = ($vm | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
                 $type = 'VM'
                 $vc = ($global:DefaultVIServer).Name
-                $cluster = $vm.VMHost.Parent
+                $cluster = ($vm.VMHost.Parent | Select-Object -ExpandProperty Name) -replace ' ',$ClusterNameSpacer
                 $unit = $stat.Unit
                 $interval = $stat.IntervalSecs
                 $DiskType = 'Block'
@@ -284,13 +289,13 @@ Process {
                 ## Create and populate variables for the purpose of writing to InfluxDB Line Protocol
                 $measurement = $stat.MetricId
                 $value = $stat.Value
-                $name = $vm.Name
+                $name = ($vm | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
                 $type = 'VM'
                 $DiskType = 'NFS'
                 $unit = $stat.Unit
                 $interval = $stat.IntervalSecs
                 $vc = ($global:DefaultVIServer).Name
-                $cluster = $vm.VMHost.Parent
+                $cluster = ($vm.VMHost.Parent | Select-Object -ExpandProperty Name) -replace ' ',$ClusterNameSpacer
                 [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
 
                 ## handle instance
