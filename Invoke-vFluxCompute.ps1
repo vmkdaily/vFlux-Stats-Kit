@@ -92,14 +92,14 @@ Begin {
   $InfluxStruct = New-Object -TypeName PSObject -Property @{
     InfluxDbServer             = 'localhost'                                   #IP Address,DNS Name, or 'localhost'
     InfluxDbPort               = 8086                                          #default for InfluxDB is 8086
-    InfluxDbName               = 'compute'                                     #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
+    InfluxDbName               = 'test'                                        #to follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI
     InfluxDbUser               = 'esx'                                         #to follow my examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI
     InfluxDbPassword           = 'esx'                                         #to follow my examples, set to 'esx' here [see above example to create InfluxDB user and set password at the same time]
     MetricsString              = ''                                            #empty string that we populate later
   }
 
   ## User Prefs
-  [string]$Logging             = 'On'                                          #string.  Options are 'On' or 'Off'
+  [string]$Logging             = 'Off'                                         #string. Options are 'On' or 'Off'
   [string]$LogDir              = $Env:Temp                                     #default is ok.  Optionally, set to something like 'c:\logs'
   [string]$LogName             = 'Invoke-vFluxCompute-log'                     #leaf of the name.  We add extension later.  This is the PowerShell transcript log file to create, if any
   [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #creates one log file per day
@@ -132,31 +132,24 @@ Begin {
 
 Process {
 
-  #Import PowerCLI module/snapin if needed.
+  #Import PowerCLI module/snapin if needed
   If(-Not(Get-Module -Name VMware.PowerCLI -ListAvailable -ErrorAction SilentlyContinue)){
-    
-    #In case its not autoloading
-    try{
-      $null = Get-Module -ListAvailable -Name VMware.PowerCLI | Import-Module -ErrorAction Stop
-    }
-    catch{
-      $vMods = Get-Module -Name VMware.* -ListAvailable -Verbose:$false
-      If($vMods) {
-        foreach ($mod in $vMods) {
-          Import-Module -Name $mod -ErrorAction Stop -Verbose:$false
-        }
-        Write-Verbose -Message 'PowerCLI 6.x Module(s) imported.'
+    $vMods = Get-Module -Name VMware.* -ListAvailable -Verbose:$false
+    If($vMods) {
+      foreach ($mod in $vMods) {
+        Import-Module -Name $mod -ErrorAction Stop -Verbose:$false
       }
-      Else {
-        If(!(Get-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-          Try {
-            Add-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction Stop
-            Write-Verbose -Message 'PowerCLI 5.x Snapin added; recommend upgrading to PowerCLI 6.x'
-          }
-          Catch {
-            Write-Warning -Message 'Could not load PowerCLI'
-            Throw 'PowerCLI 5 or later required'
-          }
+      Write-Verbose -Message 'PowerCLI 6.x Module(s) imported.'
+    }
+    Else {
+      If(!(Get-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+        Try {
+          Add-PSSnapin -Name VMware.VimAutomation.Core -ErrorAction Stop
+          Write-Verbose -Message 'PowerCLI 5.x Snapin added; recommend upgrading to PowerCLI 6.x'
+        }
+        Catch {
+          Write-Warning -Message 'Could not load PowerCLI'
+          Throw 'PowerCLI 5 or later required'
         }
       }
     }

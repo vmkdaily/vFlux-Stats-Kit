@@ -83,7 +83,7 @@ Begin {
     }
 
     ## User Prefs
-    [string]$Logging             = 'On'                                           #string.  Options are 'On' or 'Off'
+    [string]$Logging             = 'Off'                                          #string. Options are 'On' or 'Off'
     [string]$LogDir              = $Env:Temp                                      #default is ok.  Optionally, set to something like 'c:\logs'
     [string]$LogName             = 'vFlux-IOPS'                                   #leaf of the name.  We add extension later.  This is the PowerShell transcript log file to create, if any
     [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String    #creates one log file per day
