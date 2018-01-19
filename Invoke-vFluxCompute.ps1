@@ -320,7 +320,7 @@ Process {
           Invoke-RestMethod -Headers @{Authorization=$authheader} -Uri $uri -Method POST -Body $InfluxStruct.MetricsString -Verbose:$ShowRestConnections -ErrorAction Stop
         }
         Catch {
-          Write-Warning -Message ('Problem writing {0} for {1} at {2}' -f ($measurement), ($vm), (Get-Date))
+          Write-Warning -Message ('Problem writing {0} for {1} at {2}' -f ($measurement), ($name), (Get-Date))
           Write-Warning -Message ('{0}' -f $_.Exception.Message)
         }
 
