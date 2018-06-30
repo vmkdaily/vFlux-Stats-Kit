@@ -23,7 +23,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 This kit supports the latest InfluxDB v0.11 and latest Grafana 2.6, on both Windows or Linux.  For best performance use the latest Powershell and PowerCLI.
 
 ## VMware VSAN
-This kit does not support VMware VSAN stats.  If you need those feel free to write your own using the API or use the amazing and simple pre-made appliance by [Sexi Graf](http://www.sexigraf.fr/).
+This kit does not support VMware VSAN stats.  If you need those feel free to write your own using the API, PowerCLI, or use the amazing and simple pre-made appliance by [Sexi Graf](http://www.sexigraf.fr/).
 
 ## Requirements
 You'll need at least one Windows box with VMware PowerCLI installed.  This should be a dependable device as you will likely run this as a scheduled task.<br>
@@ -43,7 +43,7 @@ This thing actually performs reasonably well.  However, there is _plenty_ of roo
 
 **On the Powershell side**
 
-These scripts (`vFlux-IOPS.ps1` and `vFlux-Compute.ps1`) are intentionally simple to show what is possible.  They deviate a bit from my normal get-stat scripts in that I'm not using `Group-Object` and not doing `get-stat` in one go; this is for the sake of simplicity in this case.  
+These scripts are intentionally simple to show what is possible.  They deviate a bit from my normal get-stat scripts in that I'm not using `Group-Object` and not doing `get-stat` in one go; this is for the sake of simplicity in this case.  
 
 **On the InfluxDB side**  
 
@@ -64,10 +64,10 @@ I created a derived metric called %READY Health.  It multiplies the "acceptable"
 
 In the above example of %READY of .80, if the VM has 8 vCPU, it's %READY health will be .80.  This is the difference between 8 * .20 and the current reading of .80.
 
+Note: CPU Ready Health has been removed in the latest versions. We still keep regular ready time, just not the derived metric. This is just to keep it simple. Let me know if anyone liked or needed this.
+
 ## My Guides
-[How To Guide - Installing InfluxDB and Grafana on CentOS 7](http://vmkdaily.ghost.io/influxdb-and-grafana-on-centos/)<br>
-How To Guide - Deploying InfluxDB and Grafana on Windows [coming soon]<br>
-How To Guide - Customizing Charts in Grafana [coming soon]<br>
+[[updated] How To Guide - Installing InfluxDB and Grafana on CentOS 7](https://vmkdaily.ghost.io/collecting-and-visualizing-vsphere-performance-metrics-with-powercli-influxdb-and-grafana/)<br>
 
 Mike<br>
 @vmkdaily
