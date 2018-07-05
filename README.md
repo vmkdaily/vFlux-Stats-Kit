@@ -28,9 +28,6 @@ This kit does not support VMware VSAN stats.  If you need those feel free to wri
 ## Requirements
 You'll need at least one Windows box with VMware PowerCLI installed.  This should be a dependable device as you will likely run this as a scheduled task.<br>
 
-As for InfluxDB and Grafana, they can be installed on Windows if desired (see my [How To Guide - Compiling InfluxDB on Windows](http://www.vmkdaily.com/posts/how-to-guide-compiling-influxdb-on-windows)).  If you want to run them on CentOS 7, check out my write up at:
-http://vmkdaily.ghost.io/influxdb-and-grafana-on-centos/
-
 ## Inspiration
 This project was inspired by (but not based on) a post by @chriswahl with his [Building a dashboard with grafana and powercli](http://wahlnetwork.com/2015/04/29/building-a-dashboard-with-grafana-influxdb-and-powercli/) and [the associated github content](https://github.com/WahlNetwork/grafana-vsphere-lab).  Some really nice Powershell doing JSON writes to v0.8.  However, by the the time I got to try that, the JSON writes were deprecated for InfluxDB Line Protocol.
 
