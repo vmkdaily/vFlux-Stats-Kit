@@ -32,8 +32,8 @@
 
 ## Use the official influxdata binary on your system that comes with InfluxDB, but do it from PowerShell without leaving Fluxor with Invoke-FluxCLI.
 
-  PS /home/fluxor> Invoke-FluxCLI -Version
-  PS /home/fluxor> InfluxDB shell version: 1.6.3
+  PS /home/mike> Invoke-FluxCLI -Version
+  PS /home/mike> InfluxDB shell version: 1.6.3
 
 
 ## In this example, we have everything except the 'summary' database, so we add it.
@@ -82,7 +82,7 @@ If a database has not been populated then we will see no results when we query f
 
 Once data points have been written you should see the following two measurements for summary:
 
-  PS /home/fluxor> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
+  PS /home/mike> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
   name: measurements
   name
   ----

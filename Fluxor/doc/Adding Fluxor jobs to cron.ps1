@@ -55,11 +55,11 @@ or dir ~/
 Note: $HOME is the analog to $env:USERPROFILE of Windows (though $HOME works on Windows too).
 
 ## Step 8 - Create your scripts
-Though we have this fancy module, we still depend on you to create the scripts tol run in cron.
+Alhough we have this fancy module, we still depend on you to create the scripts to run in cron.
 The important bit is the she bang (#!) at the top that tells cron to use PowwerShell.
 
 ## Learn Where PowerShell is located
-This is how we determine what to palce after the she bang in our cron scripts.
+This is how we determine what to place after the she bang (#!) in our cron scripts.
 
   which pwsh
 
@@ -94,7 +94,6 @@ Or, to run as root
 
 Note: The recommendation is not to run as root.
 
-
 Step 10. Use the editor of your choice when prompted by crontab.
 By default, you will use nano. This means just arrow down to the bottom and enter your text.
 When ready, save changes in nano with <CTRL + x>, press <y> and hit <enter> on your keyboard.
@@ -107,6 +106,21 @@ The following cron example gathers performance and summary information every 10 
       */10 * * * * ~/stat-runner-summary-vm.ps1
       */10 * * * * ~/stat-runner-summary-vmhost.ps1
 
+
+Step 11. About preventing dip in stat collection
+You need to determine the timing of your systems and how long the jobs take to run.
+Use Grafana to review the stats for last hour or 30 minutes to observe the dips.
+Also consider running "Get-FluxCrontab -Count 20" or similar to watch your jobs.
+
+Consider too, that some missing stats may be okay. When looking at the data for past
+week, month, etc. over time, you will not notice. However, if you need more precise
+views (i.e. down to 5 or 1 minute accuracy) then you may consider tweaking.
+
+If you follow the examples we use a simple technique of passing an array (i.e. 1..15)
+of numbers into a foreach loop to kick off 15 stat runs (with a sleep at the end).
+What you may notice is stats just dipping down in the chart, say from the 8 minute mark
+to the 10 minute mark. This means you need to add a couple more (i.e. 1..20) or instead
+run more jobs. 
 
 ## APPENDIX - CRON OPTIONS TABLE
 Instead of /10 for the minutes field, you could use some other value:

@@ -28,6 +28,39 @@ Function Invoke-FluxCLI {
       .PARAMETER Interactive
         Switch. Interact with the InfluxDB CLI directly. Type quit or exit to return to PowerShell.
 
+      .EXAMPLE
+      PS /home/fluxor> Invoke-FluxCLI -Version
+      PS /home/fluxor> InfluxDB shell version: 1.6.3
+
+      This example uses the Version switch of Invoke-FluxCLI to show the current version of the influx binary on the system.
+
+      .EXAMPLE
+      PS /home/mike> Invoke-FluxCLI -ScriptText 'SHOW DATABASES'
+      name: databases
+      name
+      ----
+      _internal
+      iops
+      compute
+
+      This example shows that this system has a couple of databases already. We have '_internal', which is a default database used for the InfluxDB system, and also 'compute' and 'iops' which will be used with the Fluxor cmdlets.
+
+      .EXAMPLE
+      PS /home/mike> Invoke-FluxCLI -ScriptText 'CREATE DATABASE summary'
+      PS /home/mike>
+
+      This example created a database on InfluxDB called summary. There was no repsonse which means there were no errors (this is the influx way).
+    
+      .EXAMPLE
+      PS /home/mike> Invoke-FluxCLI -ScriptText 'SHOW DATABASES'
+      name
+      ----
+      _internal
+      iops
+      compute
+      summary
+
+      This example shows that we now have all of the required databases to use Fluxor (iops, compute, and summary). Feel free to add more and test other data streams too!
   #>
 
   [CmdletBinding()]

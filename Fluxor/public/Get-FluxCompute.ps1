@@ -31,8 +31,7 @@ Function Get-FluxCompute {
         PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
 
       .PARAMETER CredentialPath
-        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml".
-        This is a Windows only feature.
+        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
       
       .PARAMETER User
         String. Optionally, enter a user for connecting to vCenter Server.
@@ -143,7 +142,7 @@ Function Get-FluxCompute {
     #PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
     [PSCredential]$Credential,
     
-    #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml").
+    #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml"). This parameter is not supported on Core Editions of PowerShell.
     [ValidateScript({Test-Path $_ -Type File})]
     [string]$CredentialPath,
 
@@ -204,13 +203,13 @@ Function Get-FluxCompute {
       [string]$statLeaf            = 'fluxstat'                                    #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
       [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day
       [string]$DisplayNameSpacer   = '\ '                                          #We perform a replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
-      [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Windows Only. Path to encrypted xml Credential file on disk. We ignore plain text entries if this or Credential is populated. To create a PSCredential on disk see "help New-FluxCredential".
+      [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core Editions of PowerShell. Enter the path to an encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
       
     
       ## Plain text option
       If(-Not($Strict)){
-        [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored in Strict mode. Optionally, enter an existing read-only user on vCenter Server
-        [string]$vcPass              = 'VMware123!!'                               #This value is ignored in Strict mode. Optionally, enter the password for the desired vCenter Server user.
+        [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored in Strict mode or if we have PSCredential. Optionally, enter an existing read-only user on vCenter Server
+        [string]$vcPass              = 'VMware123!!'                               #This value is ignored in Strict mode or if we have PSCredential. Optionally, enter the password for the desired vCenter Server user.
       }
       
       ## stat preferences

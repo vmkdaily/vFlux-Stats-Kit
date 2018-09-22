@@ -15,7 +15,7 @@ Function Write-FluxCompute {
         Author:        Mike Nisk
         Supports:      Core Editions of PowerShell 6.0 and later (including 6.1), and PowerShell 3.0 to 5.1
         Supports:      Windows, Linux, macOS as clients for collecting and writing stats
-        Supports:      Windows only (and non-core edition of PowerShell) for Credential on disk feature (optional)
+        Supports:      Windows only (and non-core editions of PowerShell) for Credential on disk feature (optional)
         Known Issues:  InfluxDB needs a PowerShell culture of en-US for InfluxDB writes that are float (i.e. 97.5)
         
       .PARAMETER Server
@@ -27,8 +27,8 @@ Function Write-FluxCompute {
         If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
     
       .PARAMETER CredentialPath
-        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml".
-        This is a Windows only feature.
+        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsInfluxDB.enc.xml".
+        This parameter is not supported on Core Editions of PowerShell.
 
       .PARAMETER Port
         Integer. The InfluxDB Port to connect to.
@@ -76,7 +76,7 @@ Function Write-FluxCompute {
       #PSCredential. Optionally, provide a PSCredential containing the login for InfluxDB Server.
       [PSCredential]$Credential,
       
-      #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml').
+      #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsInfluxDB.enc.xml'). This parameter is not supported on Core Editions of PowerShell.
       [string]$CredentialPath,
 
       #String. Optionally, enter a user for connecting to InfluxDB Server. This is exclusive of the PSCredential options.

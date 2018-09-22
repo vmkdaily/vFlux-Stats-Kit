@@ -4,7 +4,7 @@ Function Get-FluxCrontab {
   
   <#
       .DESCRIPTION
-        Display the currently running cron jobs on the local system. By default searches for scripts you create that start with the name 'stat-runner' (since we use thatt in the examples). Optionally, populate the Name parameter to search for a unique string.
+        Display the currently running cron jobs on the local system. By default searches for scripts you create that start with the name 'stat-runner' (since we use that in the examples). Optionally, populate the Name parameter to search for a unique string.
         
       .NOTES
         Script:   Get-FluxCrontab.ps1

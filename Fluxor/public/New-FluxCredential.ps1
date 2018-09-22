@@ -23,10 +23,34 @@
       .EXAMPLE
       New-FluxCredential
     
+      Welcome to New-FluxCredential!
+      Credentials will be saved to C:\Users\mike
+
+      Save Credential for:
+      1. InfluxDB
+      2. vCenter Lab
+      3. vCenter Dev
+      4. vCenter Prod
+      5. vCenter Prod2
+
+      X. Exit
+
+      Select 1-5:
+
       This example launches the interactive menu to allow user to enter name and password, and
       save the resulting PSCredential file to disk. The resulting encrypted xml file will be
       saved to the default directory of $HOME, since Path was not specified.
-    
+      
+      Please note the following default filenames created in your $HOME directory (depending on how many you configure):
+      
+      CredsInfluxDB.enc.xml
+      CredsVcLab.enc.xml
+      CredsVcDev.enc.xml
+      CredsVcProd.enc.xml
+      CredsVcProd2.enc.xml
+ 
+      Note: Feel free to rename the credential files if desired. By default the Fluxor scripts will look for these in $HOME by the expected filenames above. You can also use the -CredentialPath parameter at runtime of Fluxor cmdlets to point to the desired Credential file if any.
+      
       .EXAMPLE
       New-FluxCredential -Path "$HOME/MyCreds"
     
