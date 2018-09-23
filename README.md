@@ -243,7 +243,7 @@ In this example, we have everything except the `summary` database:
 
 ## Create the summary database
 Let's add the summary database to InfluxDB. We will again use `Invoke-FluxCLI`, which is just a wrapper for the `influx` binary.
-The nature of `influx` commands are to only respond if something went wrong. In the below, no response is good.
+The nature of `influx` commands is to respond only if something failed. In the below, no response is good.
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'CREATE DATABASE summary'
     PS /home/mike>
@@ -267,7 +267,7 @@ Here we use the native `SHOW DATABASES` command via the `ScriptText` parameter o
 <br>
 
 ## Show measurements
-If a database has not been populated then we will see no results when we query for measurements.
+Let's perform a `SHOW MEASUREMENTS` on the `summary` database. If a database has not been populated, then we see no results when we query for measurements.
 
     PS /home/mike> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
     PS /home/mike>
@@ -275,16 +275,17 @@ If a database has not been populated then we will see no results when we query f
 <br>
 
 ## Write summary results for VMs
-With no parameters, we get summary information for virtual machines.
+Now let's populate the `summary` database with some stats. For this we will use the `Get-FluxSummary` to collect summary data points, and then we use `Write-FluxSummary` to write the results to InfluxDB. The default value for the `ReportType` switch is `VM` though we populate anyway here for visualization (soon we will do `VMHost` too).
 
 
-    Get-FluxSummary | Write-FluxSummary
+    Get-FluxSummary -ReportType 'VM' | Write-FluxSummary
+
+> Example assumes we are connected to vCenter already and InfluxDB is localhost. Use additional parameters as needed.
 
 <br>
 
 ## Write summary results for VMHosts
-Here we will use the ReportType parameter (which has a default of `VM`) and we
-populate it with `VMHost` as follows:
+Here we will use the ReportType of `VMHost` when collecting summary data points.
 
     Get-FluxSummary -Server $vc -ReportType VMHost | Write-FluxSummary
 
