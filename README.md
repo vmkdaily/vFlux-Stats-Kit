@@ -266,8 +266,8 @@ You can also show databases and interact as expected.
 ## Show measurements
 If a database has not been populated then we will see no results when we query for measurements.
 
-  PS /home/mike> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
-  PS /home/mike>
+    PS /home/mike> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
+    PS /home/mike>
 
 <br>
 
