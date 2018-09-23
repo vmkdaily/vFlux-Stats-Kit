@@ -3,7 +3,7 @@
 ___
 
 #### Introduction
-Welcome to the `Fluxor` module, a part of the `vFlux-Stats-Kit`.
+Welcome to the `Fluxor` module, part of the `vFlux-Stats-Kit`.
 
 #### Purpose
 The Fluxor module gathers performance stats from `VMware vSphere` and writes them
