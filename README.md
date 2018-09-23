@@ -229,8 +229,7 @@ Now we add a new database called `summary` to take in basic information such as 
 add a ton of stuff here (think anything you can dot into from `Get-VM`). For now we keep it simple.
 
 ## Adding the summary database
-In this example, we have everything except the `summary` database, so let's add it.
-You can also show databases and interact as expected.
+In this example, we have everything except the `summary` database:
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'SHOW DATABASES'
     name: databases
@@ -243,13 +242,18 @@ You can also show databases and interact as expected.
 <br>
 
 ## Create the summary database
+Let's add the summary database to InfluxDB. We will again use `Invoke-FluxCLI`, which is just a wrapper for the `influx` binary.
+The nature of `influx` commands are to only respond if something went wrong. In the below, no response is good.
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'CREATE DATABASE summary'
     PS /home/mike>
 
+> Influx commands only return a response on failure.
+
 <br>
 
 ## Show databases
+Here we use the native `SHOW DATABASES` command via the `ScriptText` parameter of `Invoke-FluxCLI`.
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'SHOW DATABASES'
     PS /home/mike> name: databases
