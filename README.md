@@ -312,7 +312,47 @@ Writing to text files is not the cmdlet default, but we make it available. Users
 take these files and then control the push to InfluxDB themselves. The files are crafted
 in line protocol, which means they are really just for InfluxDB.
 
-## Object Output
-By default, the `Fluxor` cmdlets that collect data points (i.e. `Get-FluxCompute`, `Get-FluxIOPS` and `Get-FluxSummary`) always return a PowerShell object (a simple array). If you want vSphere stat objects instead, use `PassThru`.
+## About Object Output (default)
+We always output into pure InfluxDB-style line protocol (unless using the `PassThru` switch).
+The `Fluxor` cmdlets that collect data points (i.e. `Get-FluxCompute`, `Get-FluxIOPS` and `Get-FluxSummary`)
+always return a PowerShell object (a simple array of line protocol, including the required line breaks).
+If you want pure `VMware vSphere` stat objects instead, use `PassThru`.
+
+## About PassThru mode
+Use `PassThru` mode to access the raw `Get-Stat` and `Get-VsanStat` and then exit. `Fluxor` will do nothing further with those, except return the array of stat objects, if any. This can be convenient for comparison against what you see in `Grafana` for example.
+
+## Get stats in PassThru
+Here, we are already connected to vCenter and just grab some stats in `PassThru` mode.
+
+    $stats = Get-FluxCompute -PassThru
+
+<br>
+
+## Look for a particular VM results
+At first glance you might not realize the stat has the virtual machine information too. You can dig into the object as you would expect.
+
+    $stats | ?{$_.Entity -match '^ExactlyThisVmName001'}
+    $stats | ?{$_.Entity -match '^nameStartsLikeThis'}
+    $stats | ?{$_.Entity -like "*kindalikethis*"
+
+<br>
+
+## Get stat result of a certain type
+Let's keep looking at this one VM to keep it simple. Let's also dig into just one metric (or `measurement` as we call it for `InfluxDB`).
+
+    Get-FluxCompute -PassThru | Where-Object {$_.Entity -match '^TESTVM001' -and $_.MetricID -eq 'cpu.usage.average'}
+
+<br>
+
+## Loop it
+Remember, this is the VMware-style stat, not line protocol. This kind of usage is best for comparing results already being collected and visualized. By getting the object from Fluxor in `PassThru` mode, you do not have to think about parameters, or storage types, etc. that you would by running the commands yourself (but you will get no line protocol!).
+
+Here we issue `Get-FluxCompute -PassThru` and limit the results to only `cpu.usage.average`.
+
+    $vm = 'myvm001'
+    1..10 | ForEach-Object {Get-Date -Format o; Get-FluxCompute -PassThru | Where-Object { $_.Entity -match $vm -and $_.MetricID -eq 'cpu.usage.average'}; Start-Sleep 20;""}
+
+
+<br>
 
 -end-
