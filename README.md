@@ -83,7 +83,7 @@ ___
 
 ###### Getting Started with Fluxor
 
-## Step 1. Download the vFlux-Stats-Kit from from Github.
+## Step 1. Download the vFlux-Stats-Kit from from Github
 
     https://github.com/vmkdaily/vFlux-Stats-Kit
 
