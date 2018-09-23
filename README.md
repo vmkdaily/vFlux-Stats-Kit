@@ -19,8 +19,6 @@ using the `OutputPath` parameter or return raw vSphere API objects with the
 #### Community Posts, Dashboards, etc.
 [https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
 
-<br>
-
 #### Issues / Ideas
 Please open an issue for any creative ideas or feedback (or to share a dashboard or post!).
 Of course, if you find an issue or an OS that we cannot handle yet, please do let us know.
@@ -29,9 +27,10 @@ There is no need to follow any official format.
 #### Twitter / Blog / Github
 Twitter DM is open. Reach us at:
 [https://twitter.com/vmkdaily](https://twitter.com/vmkdaily)
+<br>
 [https://vmkdaily.ghost.io/](https://vmkdaily.ghost.io/)
+<br>
 [https://github.com/vmkdaily](https://github.com/vmkdaily)
-
 <br>
 
 #### OS Requirements
