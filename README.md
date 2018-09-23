@@ -26,6 +26,7 @@ There is no need to follow any official format.
 
 #### Twitter / Blog / Github
 Twitter DM is open. Reach us at:
+<br>
 [https://twitter.com/vmkdaily](https://twitter.com/vmkdaily)
 <br>
 [https://vmkdaily.ghost.io/](https://vmkdaily.ghost.io/)
