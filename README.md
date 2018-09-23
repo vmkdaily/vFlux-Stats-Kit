@@ -14,6 +14,7 @@ using the `OutputPath` parameter or return raw vSphere API objects with the
 #### Supporting Blog Post
 We can deploy this on Windows, CentOS, etc. For the write-up in the link below,
 we go exclusively with `Ubuntu LTS 16.04` or `Ubuntu LTS 18.04`.
+[Building a Universal vSphere Performance Monitoring Kit with PowerShell Core, InfluxDB, and Grafana on Ubuntu](https://vmkdaily.ghost.io/building-a-universal-vsphere-performance-monitoring-kit-with-powershell-core-influxdb-and-grafana-on-ubuntu/)
 
 #### OS Requirements
 All required components can be run on a single client, or across multiple clients
@@ -66,66 +67,57 @@ read-only account when in doubt. Also, check with your InfoSec
 team to ensure you find the best option (of the many we offer)
 for credential handling with the Fluxor module.
 
-#### Getting Started with Fluxor
-**Step 1.** Download the vFlux-Stats-Kit from from Github.
-<br>
+___
+
+###### Getting Started with Fluxor
+
+#### Step 1. Download the vFlux-Stats-Kit from from Github.
 
     https://github.com/vmkdaily/vFlux-Stats-Kit
 
 <br>
-**Step 2.** Scan the download (Optional)
-<br>
+
+#### Step 2. Scan the download (Optional)
 Navigate to Downloads, and right-click the `.zip` file and select scan
-<br>
 
 <br>
-**Step 3.** Unblock the zip (Optional)
-<br>
+
+#### Step 3. Unblock the zip (Optional)
 Right-click the `.zip` file and select Properties, and then `unblock`, if available.
 
-<br>
-**Step 4.** List contents
-<br>
+#### Step 4.** List contents
 Get familiar with the layout of the module. We use a very common technique of public and private folders
 within the module. Any cmdlets in the private folder are used internally by the module. The cmdlets that
 you will interact with are located in the public folder. Nothing is truly `public`, this is just module talk.
 
-<br>
-**Step 5.** Copy the `Fluxor` folder
-<br>
+#### Step 5. Copy the `Fluxor` folder
 Locate the folder called Fluxor. This contains all of the components of the PowerShell module.
 Determine which user will be running the stats collections and copy the Fluxor folder to the
 $HOME directory (or any other location you prefer for your PowerShell modules).
 
-<br>
-**Step 6.** Optional - Open the scripts in an editor
-<br>
+#### Step 6. Optional - Open the scripts in an editor
 There are preferences sections in the Begin block of each script. Customize as desired and then take a backup
 of your Fluxor folder (i.e. send to a zip). There is no need to customize values if you use runtime parameters
 such as Server, Credential, etc.
 
-<br>
-**Step 7.**  Launch PowerShell
-<br>
+#### Step 7.  Launch PowerShell
 We support any flavor, so launch-away (PowerShell.exe, pwsh, pwsh-preview, etc.).
 
-<br>
-**Step 8.** Import the Fluxor Module
-<br>
+#### Step 8. Import the Fluxor Module
 Point to the Fluxor folder to import the module with Import-Module.
 
     Import-Module $HOME/Fluxor -Verbose
 
 <br>
-**Step 9.** Get Fluxor Commands
-<br>
+
+#### Step 9. Get Fluxor Commands
 Use Get-Command (or alias gcm) to see the available cmdlets.
 
     gcm -Module Fluxor
 
 <br>
-**Step 10.** Get Help
-<br>
+
+#### Step 10. Get Help
 Use the cmdlet help system to learn about parameters and usage.
 
     help Get-FluxIOPS
@@ -133,35 +125,38 @@ Use the cmdlet help system to learn about parameters and usage.
     help Get-FluxIOPS -Parameter -CredentialPath
 
 <br>
-**Step 11.** Get Some Stats
-<br>
+
+___
+
+#### Get Some Stats
 Let's start simple and assume you have PowerCLI up and running and you are already
 connected to vCenter.
 
     $stats = Get-FluxCompute
 
 <br>
-**Step 12.** View the Stats
-<br>
+
+#### View the Stats
 By default, we return a PowerShell object. So we can dip into the array with $stats[0], etc.
 Here we will just select the first object.
 
     $stats | Select-Object -First 1
 
 <br>
-**STEP 13.** Write to InfluxDB
-<br>
+
+#### STEP 13. Write to InfluxDB
 For this step, we assume InfluxDB is on localhost and you followed our examples thus far.
 This means you have at least one or more InfluxDB databases created (i.e. compute, iops, summary).
 
-<br>
-
     Write-FluxCompute -InputObject $stats
+
+<br>
 
 > Tip: The technique shown (using a variable) is for high performance. If you want to pipe
 you can also Get-FluxCompute | Write-FluxCompute.
 
 <br>
+
 #### About InfluxDB Measurements
 With InfluxDB, each data point we send has a measurement name. An example would be something
 like `cpu.usage.average`. We can check our success by reviewing the database for these new
@@ -184,6 +179,8 @@ First, let's just show the version and exit:
 
 > If you are still with me, great! Now let's look at some InfluxDB `Measurements`!
 
+<br>
+
 #### Reviewing measurements
 We are still using `Invoke-FluxCLI`, but now we go into more advanced usage
 with the `ScriptText` and `Database` parameters. Here we ask InfluxDB to report
@@ -199,6 +196,7 @@ least one write.
     cpu.usagemhz.average
     mem.usage.average
     net.usage.average
+
 
 <br>
 
