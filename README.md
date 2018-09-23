@@ -209,6 +209,7 @@ PSCredential login (one of many techniques available with Fluxor).
     Write-FluxIOPS -InputObject $iops
 
 <br>
+
 Next, we can check for results in Grafana by creating a dashboard, or
 using the Invoke-FluxCLI again. Let's use the CLI!
 
@@ -221,6 +222,7 @@ using the Invoke-FluxCLI again. Let's use the CLI!
     disk.numberwrite.summation
 
 <br>
+
 ## Handling summary results
 New in the latest module is a `summary` feature. Formerly, we had only `compute` and `iops`.
 Now we add a new database called `summary` to take in basic information such as overallstatus
@@ -240,12 +242,14 @@ You can also show databases and interact as expected.
     compute
 
 <br>
+
 ## Create the summary database
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'CREATE DATABASE summary'
     PS /home/mike>
 
 <br>
+
 ## Show databases
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'SHOW DATABASES'
@@ -258,6 +262,7 @@ You can also show databases and interact as expected.
     summary
 
 <br>
+
 ## Show measurements
 If a database has not been populated then we will see no results when we query for measurements.
 
@@ -265,6 +270,7 @@ If a database has not been populated then we will see no results when we query f
   PS /home/mike>
 
 <br>
+
 ## Write summary results for VMs
 With no parameters, we get summary information for virtual machines.
 
@@ -272,6 +278,7 @@ With no parameters, we get summary information for virtual machines.
     Get-FluxSummary | Write-FluxSummary
 
 <br>
+
 ## Write summary results for VMHosts
 Here we will use the ReportType parameter (which has a default of `VM`) and we
 populate it with `VMHost` as follows:
@@ -279,6 +286,7 @@ populate it with `VMHost` as follows:
     Get-FluxSummary -Server $vc -ReportType VMHost | Write-FluxSummary
 
 <br>
+
 ## Confirm measurements
 Once data points have been written, you should see the following two measurements for summary:
 
