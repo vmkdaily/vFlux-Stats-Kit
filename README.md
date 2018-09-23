@@ -14,6 +14,7 @@ using the `OutputPath` parameter or return raw vSphere API objects with the
 #### Supporting Blog Post
 We can deploy this on Windows, CentOS, etc. For the write-up in the link below,
 we go exclusively with `Ubuntu LTS 16.04` or `Ubuntu LTS 18.04`.
+
 [Building a Universal vSphere Performance Monitoring Kit with PowerShell Core, InfluxDB, and Grafana on Ubuntu](https://vmkdaily.ghost.io/building-a-universal-vsphere-performance-monitoring-kit-with-powershell-core-influxdb-and-grafana-on-ubuntu/)
 
 #### OS Requirements
@@ -24,15 +25,12 @@ of any operating system. Specifically, we support `Windows`, `Linux` and `macOS`
 Full support for Core Editions of `PowerShell` and also
 `PowerShell 3.0` through `PowerShell 5.1`.
 
-
 #### PowerCLI Requirements
 `VMware PowerCLI` 6.5.4 or greater (`PowerCLI 10.x` or later preferred)
-
 
 #### Background
 Fluxor started out as individual .ps1 scripts and is now PowerShell module.
 Initially, this was intended to run on Windows only, but we now support everything.
-
 
 #### Contributions
 Over time, the techniques we use have evolved with great thanks to the community members.
@@ -41,20 +39,17 @@ and `Invoke-WebRequest` (since `v0.4`) and can run on anything (as of `v1.0.0.1`
 topics such as session handling with the webcmdlets were handled by our users. These and
 many more advancements are reflected in the latest release.
 
-
 #### Platform Limitations for Credential on disk
 Though we support all operating systems that `PowerShell` and `PowerCLI` run on,
 credentials on disk are not available for Core Editions of PowerShell. So this
 means all `Linux` and `macOS`, and any `Windows` that are running Core Editions of PowerShell
 cannot save or consume `PSCredential` from disk.
 
-
 #### Platform Limitations for secure string
 Core Editions of PowerShell cannot handle secure string, so we leave the Parameters of
 `User` and `Password` as `[string]` compared to secure string. If you will run on Windows with
 a `PowerShell 3.0` through `PowerShell 5.1`, you can use use secure string without issue (if so
 inclined to edit).
-
 
 #### PSCredentials at runtime
 There is no impact to `PSCredential` handling in memory (i.e. `$creds = Get-Credential`) for Core
@@ -71,53 +66,50 @@ ___
 
 ###### Getting Started with Fluxor
 
-#### Step 1. Download the vFlux-Stats-Kit from from Github.
+## Step 1. Download the vFlux-Stats-Kit from from Github.
 
     https://github.com/vmkdaily/vFlux-Stats-Kit
 
-<br>
 
-#### Step 2. Scan the download (Optional)
+## Step 2. Scan the download (Optional)
 Navigate to Downloads, and right-click the `.zip` file and select scan
 
-<br>
-
-#### Step 3. Unblock the zip (Optional)
+## Step 3. Unblock the zip (Optional)
 Right-click the `.zip` file and select Properties, and then `unblock`, if available.
 
-#### Step 4.** List contents
+## Step 4. List contents
 Get familiar with the layout of the module. We use a very common technique of public and private folders
 within the module. Any cmdlets in the private folder are used internally by the module. The cmdlets that
 you will interact with are located in the public folder. Nothing is truly `public`, this is just module talk.
 
-#### Step 5. Copy the `Fluxor` folder
+## Step 5. Copy the `Fluxor` folder
 Locate the folder called Fluxor. This contains all of the components of the PowerShell module.
 Determine which user will be running the stats collections and copy the Fluxor folder to the
 $HOME directory (or any other location you prefer for your PowerShell modules).
 
-#### Step 6. Optional - Open the scripts in an editor
+## Step 6. Optional - Open the scripts in an editor
 There are preferences sections in the Begin block of each script. Customize as desired and then take a backup
 of your Fluxor folder (i.e. send to a zip). There is no need to customize values if you use runtime parameters
 such as Server, Credential, etc.
 
-#### Step 7.  Launch PowerShell
+## Step 7.  Launch PowerShell
 We support any flavor, so launch-away (PowerShell.exe, pwsh, pwsh-preview, etc.).
 
-#### Step 8. Import the Fluxor Module
+## Step 8. Import the Fluxor Module
 Point to the Fluxor folder to import the module with Import-Module.
 
     Import-Module $HOME/Fluxor -Verbose
 
 <br>
 
-#### Step 9. Get Fluxor Commands
+## Step 9. Get Fluxor Commands
 Use Get-Command (or alias gcm) to see the available cmdlets.
 
     gcm -Module Fluxor
 
 <br>
 
-#### Step 10. Get Help
+## Step 10. Get Help
 Use the cmdlet help system to learn about parameters and usage.
 
     help Get-FluxIOPS
@@ -128,7 +120,7 @@ Use the cmdlet help system to learn about parameters and usage.
 
 ___
 
-#### Get Some Stats
+## Get Some Stats
 Let's start simple and assume you have PowerCLI up and running and you are already
 connected to vCenter.
 
@@ -136,7 +128,7 @@ connected to vCenter.
 
 <br>
 
-#### View the Stats
+## View the Stats
 By default, we return a PowerShell object. So we can dip into the array with $stats[0], etc.
 Here we will just select the first object.
 
@@ -144,7 +136,7 @@ Here we will just select the first object.
 
 <br>
 
-#### STEP 13. Write to InfluxDB
+## Write to InfluxDB
 For this step, we assume InfluxDB is on localhost and you followed our examples thus far.
 This means you have at least one or more InfluxDB databases created (i.e. compute, iops, summary).
 
@@ -157,16 +149,16 @@ you can also Get-FluxCompute | Write-FluxCompute.
 
 <br>
 
-#### About InfluxDB Measurements
+## About InfluxDB Measurements
 With InfluxDB, each data point we send has a measurement name. An example would be something
 like `cpu.usage.average`. We can check our success by reviewing the database for these new
 measurements. Next, we show a couple of ways to do that.
 
-#### Using influx, the native InfluxDB tool
+## Using influx, the native InfluxDB tool
 We can use the native InfluxDB commandline tool known as `influx` to interact with the local
 InfluxDB database. Just type `influx` from your shell.
 
-#### Using Invoke-FluxCLI (part of the Fluxor module)
+## Using Invoke-FluxCLI (part of the Fluxor module)
 We placed a wrapper around the native `influx` command just for convenience and optional use.
 If you like doing stuff from PowerShell and keeping it simple, then this is for you.
 
@@ -181,7 +173,7 @@ First, let's just show the version and exit:
 
 <br>
 
-#### Reviewing measurements
+## Reviewing measurements
 We are still using `Invoke-FluxCLI`, but now we go into more advanced usage
 with the `ScriptText` and `Database` parameters. Here we ask InfluxDB to report
 back with measurements it has. This means we were successful in performing at
@@ -203,7 +195,7 @@ least one write.
 Great, we are getting all of the measurements that come with `compute` metrics.
 Now let's move on to IOPS.
 
-#### Getting and Writing IOPS results
+## Getting and Writing IOPS results
 Every cmdlet works the same and once you get the hang of one, the others should be easy.
 We already worked with Get-FluxCompute and Write-FluxCompute. Here, we gather results for
 disk performance.
@@ -229,13 +221,13 @@ using the Invoke-FluxCLI again. Let's use the CLI!
     disk.numberwrite.summation
 
 <br>
-#### Handling summary results
+## Handling summary results
 New in the latest module is a `summary` feature. Formerly, we had only `compute` and `iops`.
 Now we add a new database called `summary` to take in basic information such as overallstatus
 (i.e. `green`,`red`, etc.) and  things you would expect such as `numcpu` and `memorygb`. We can easily
 add a ton of stuff here (think anything you can dot into from Get-VM). For now we keep it simple.
 
-#### Adding the summary database
+## Adding the summary database
 In this example, we have everything except the `summary` database, so let's add it.
 You can also show databases and interact as expected.
 
@@ -248,13 +240,13 @@ You can also show databases and interact as expected.
     compute
 
 <br>
-#### Create the summary database
+## Create the summary database
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'CREATE DATABASE summary'
     PS /home/mike>
 
 <br>
-#### Show databases
+## Show databases
 
     PS /home/mike> Invoke-FluxCLI -ScriptText 'SHOW DATABASES'
     PS /home/mike> name: databases
@@ -266,28 +258,28 @@ You can also show databases and interact as expected.
     summary
 
 <br>
-#### Show measurements
+## Show measurements
 If a database has not been populated then we will see no results when we query for measurements.
 
   PS /home/mike> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
   PS /home/mike>
 
 <br>
-#### Write summary results for VMs
+## Write summary results for VMs
 With no parameters, we get summary information for virtual machines.
 
 
     Get-FluxSummary | Write-FluxSummary
 
 <br>
-#### Write summary results for VMHosts
+## Write summary results for VMHosts
 Here we will use the ReportType parameter (which has a default of `VM`) and we
 populate it with `VMHost` as follows:
 
     Get-FluxSummary -Server $vc -ReportType VMHost | Write-FluxSummary
 
 <br>
-#### Confirm measurements
+## Confirm measurements
 Once data points have been written, you should see the following two measurements for summary:
 
     PS /home/mike> Invoke-FluxCLI -Database summary -ScriptText 'SHOW MEASUREMENTS'
