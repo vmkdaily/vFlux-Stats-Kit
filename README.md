@@ -14,7 +14,7 @@ using the `OutputPath` parameter or return raw vSphere API objects with the
 #### Supporting Blog Posts
 [Building a Universal vSphere Performance Monitoring Kit with PowerShell Core, InfluxDB, and Grafana on Ubuntu](https://vmkdaily.ghost.io/building-a-universal-vsphere-performance-monitoring-kit-with-powershell-core-influxdb-and-grafana-on-ubuntu/)
 
-[https://vmkdaily.ghost.io/collecting-and-visualizing-vsphere-performance-metrics-with-powercli-influxdb-and-grafana/](Collecting and Visualizing vSphere Performance Metrics with PowerCLI, InfluxDB and Grafana on CentOS 7)
+[Collecting and Visualizing vSphere Performance Metrics with PowerCLI, InfluxDB and Grafana on CentOS 7](https://vmkdaily.ghost.io/collecting-and-visualizing-vsphere-performance-metrics-with-powercli-influxdb-and-grafana-on-centos-7/)
 
 #### OS Requirements
 All required components can be run on a single client, or across multiple clients
