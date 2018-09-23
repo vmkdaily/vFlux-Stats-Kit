@@ -26,7 +26,7 @@ Full support for Core Editions of `PowerShell` and also
 `PowerShell 3.0` through `PowerShell 5.1`.
 
 #### PowerCLI Requirements
-`VMware PowerCLI` 6.5.4 or greater (`PowerCLI 10.x` or later preferred)
+`VMware PowerCLI 6.5.4` or greater (`VMware PowerCLI 10.x` or later preferred)
 
 #### Background
 Fluxor started out as individual .ps1 scripts and is now PowerShell module.
