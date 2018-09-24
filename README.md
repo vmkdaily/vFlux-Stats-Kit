@@ -359,8 +359,8 @@ Let's keep looking at this one VM to keep it simple. Let's also dig into just on
 
 <br>
 
-## Loop it
-Remember, this is the VMware-style stat, not line protocol. This kind of usage is best for comparing results already being collected and visualized. By getting the object from Fluxor in `PassThru` mode, you do not have to think about parameters, or storage types, etc. that you would by running the commands yourself (but you will get no line protocol!).
+## Looping in PassThru mode
+One last example with PassThru. Remember, this example returns raw vSphere stats, not the default output we normally give you (line protocol).
 
 Here we issue `Get-FluxCompute -PassThru` and limit the results to only `cpu.usage.average`.
 
