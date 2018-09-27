@@ -371,9 +371,26 @@ Function Get-FluxIOPS {
       $dsvSAN = $ds | Where-Object { $_.Name -match '^vsanDatastore' }
 
       ## Running VMs by storage type
-      $BlockVMs = $dsVMFS | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
-      $NfsVMs = $dsNFS | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
-      $vsanVMs = $dsvSAN | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+      If($dsVMFS){
+        $BlockVMs = $dsVMFS | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+      }
+      Else{
+        $BlockVMs = $null
+      }
+      
+      If($dsNFS){
+        $NfsVMs = $dsNFS | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+      }
+      Else{
+        $NfsVMs = $null
+      }
+      
+      If($dsvSAN){
+        $vsanVMs = $dsvSAN | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+      }
+      Else{
+        $vsanVMs = $null
+      }
 
       ## Datastore and VM counts by type
       $VmfsDsCount = ($dsVMFS).Count
