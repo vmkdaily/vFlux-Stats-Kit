@@ -61,9 +61,7 @@ Function Get-FluxIOPS {
         that you are still having issues, consider downloading the certificate from your vCenter Server instead.
 
       .PARAMETER IgnoreDatastore
-        String. One or more datastores to ignore. For example "*local*", or "exactlythisname", or an array such as
-        "dsa","dsb" or @('dsa','dsb',"*iso*","*local*"). Also see IgnoreDsRegEx which is complementary to this
-        parameter if you need additional power.
+        String. Exactly one string value to ignore. For example "*local*". Also see IgnoreDsRegEx which is complementary to this parameter.
       
       .PARAMETER IgnoreDsRegEx
         String. Ignore datastores using a regular expression. Also see IgnoreDatastore which is complementary to this parameter.
@@ -183,8 +181,8 @@ Function Get-FluxIOPS {
       [Alias('Ice')]
       [switch]$IgnoreCertificateErrors,
       
-      #String. Ignore one or more datastores by string or array of strings. For example "*local*", or "exactlythisname", or an array such as "dsa","dsb" or @('dsa','dsb',"*iso*","*local*"). Also see IgnoreDsRegEx (ignore using a regular expression) which is complementary to this parameter if you need additional power.
-      [string[]]$IgnoreDatastore,
+      #String. Exactly one string value to ignore. For example "*local*". Also see IgnoreDsRegEx (ignore using a regular expression) which is complementary to this parameter if you need additional power.
+      [string]$IgnoreDatastore,
 
       #String. Ignore datastores using a regular expression. Also see IgnoreDatastore (ignore using strings) which is complementary to this parameter if you need additional power.
       [string]$IgnoreDsRegEx,
@@ -353,7 +351,7 @@ Function Get-FluxIOPS {
     
       ## In-Scope Datastores
       If($IgnoreDatastore){
-        $dsList = $dsList | Where-Object {$IgnoreDatastore -notlike $_.Name}
+        $dsList = $dsList | Where-Object {$_.Name -notlike $IgnoreDatastore}
       }
       If($IgnoreDsRegEx){
         $dsList = $dsList | Where-Object {$_.Name -notmatch $IgnoreDsRegEx}
