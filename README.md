@@ -79,6 +79,11 @@ read-only account when in doubt. Also, check with your InfoSec
 team to ensure that you find the best option (of the many we offer)
 for credential handling with the Fluxor module.
 
+#### SSPI / Passthrough (`Strict` parameter)
+To use passthrough authentication use the `Strict` parameter. If a credential is not provided, we try using the hard-coded value in the scripts unless the `Strict` switch is activated.
+
+$iops = Get-FluxIOPS -Server $vc -IgnoreDatastore "*local*" -Strict
+
 ___
 
 ###### Getting Started with Fluxor
