@@ -16,9 +16,29 @@ using the `OutputPath` parameter or return raw vSphere API objects with the
 
 [Collecting and Visualizing vSphere Performance Metrics with PowerCLI, InfluxDB and Grafana on CentOS 7](https://vmkdaily.ghost.io/collecting-and-visualizing-vsphere-performance-metrics-with-powercli-influxdb-and-grafana-on-centos-7/)
 
-#### Community Dashboards, Alternatives, etc.
-[https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
+#### Alternatives
+The Fluxor module gathers very basic stats and is intended for you to extend.
+However, if you just want a ready-made kit, check out the following items.
+
+vSAN - For vSAN done right, see the free sexigraf appliance (deployed as OVA).
 [http://www.sexigraf.fr/](http://www.sexigraf.fr/)
+
+<br>
+
+Telegraf - You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use
+the amazing custom scripts added by influx data community member @prydin. It does more/better than Fluxor
+and uses pure api and proper integers when writing line protocol.
+ 
+[https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md](https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md)
+
+<br>
+
+#### Community dashboards
+This one is a community dashboard using the old version of the vFlux-Stats-Kit.
+[https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
+
+
+<br>
 
 #### Issues / Ideas
 Please open an issue for any creative ideas or feedback (or to share a dashboard or post!).
