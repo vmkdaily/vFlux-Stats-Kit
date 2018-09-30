@@ -374,7 +374,133 @@ Here we issue `Get-FluxCompute -PassThru` and limit the results to only `cpu.usa
     $vm = 'myvm001'
     1..10 | ForEach-Object {Get-Date -Format o; Get-FluxCompute -PassThru | Where-Object { $_.Entity -match $vm -and $_.MetricID -eq 'cpu.usage.average'}; Start-Sleep 20;""}
 
+## Examples using all functions (with verbose output)
+Let's summarize by showing all of the main stats cmdlets being used in verbose mode.
 
+    ##########################
+    ## Virtual Machine Stats
+    ##########################
+
+    PS C:\> $stats = Get-FluxCompute -Verbose
+    VERBOSE: Starting Get-FluxCompute at 2018-09-29T20:07:15.0508946-05:00
+    VERBOSE: Using connection to vcva01.lab.local
+    VERBOSE: Beginning stat collection on vcva01.lab.local
+    VERBOSE: 9/29/2018 8:07:15 PM Get-VM Started execution
+    VERBOSE: 9/29/2018 8:07:15 PM Get-VM Finished execution
+    VERBOSE: 9/29/2018 8:07:15 PM Get-Stat Started execution
+    VERBOSE: 9/29/2018 8:07:29 PM Get-Stat Finished execution
+    VERBOSE: Running in object mode; Data points collected successfully!
+    VERBOSE: Elapsed Processing Time: 29.5228279 seconds
+    VERBOSE: Processing Time Per VM: 0.192959659477124 seconds
+    VERBOSE: Ending Get-FluxCompute at 2018-09-29T20:07:44.6205228-05:00
+    PS C:\>
+    PS C:\> $stats[0]
+    cpu.usage.average,host=myvm002,interval=20,type=VM,unit=%,vc=vcva01.lab.local value=4.25 1538269649940828928
+
+    PS C:\> $iops = Get-FluxIOPS -Verbose
+    VERBOSE: Starting Get-FluxIOPS at 2018-09-29T20:14:20.0161095-05:00
+    VERBOSE: Using connection to vcva01.lab.local
+    VERBOSE: Beginning stat collection on vcva01.lab.local
+    VERBOSE: 9/29/2018 8:14:20 PM Get-Datastore Started execution
+    VERBOSE: 9/29/2018 8:14:20 PM Get-Datastore Finished execution
+    VERBOSE: 9/29/2018 8:14:20 PM Get-VM Started execution
+    VERBOSE: 9/29/2018 8:14:20 PM Get-VM Finished execution
+    VERBOSE: 9/29/2018 8:14:21 PM Get-VM Started execution
+    VERBOSE: 9/29/2018 8:14:21 PM Get-VM Finished execution
+    VERBOSE:
+    VERBOSE: //vcva01.lab.local Overview
+    VERBOSE: VMFS Datastores: 50
+    VERBOSE: NFS Datastores: 2
+    VERBOSE: vSAN Datastore: False
+    VERBOSE: Block VMs: 153
+    VERBOSE: NFS VMs: 0
+    VERBOSE: vSAN VMs: 0
+    VERBOSE: 9/29/2018 8:14:21 PM Get-Stat Started execution
+    VERBOSE: 9/29/2018 8:14:32 PM Get-Stat Finished execution
+    VERBOSE: Running in object mode; Data points collected successfully!
+    VERBOSE: Ending Get-FluxIOPS at 2018-09-29T20:14:34.5576511-05:00
+    PS C:\>
+    PS C:\> $iops[0]
+    disk.numberwrite.summation,disktype=Block,host=myvm002,instance=naa.6019cb5180a3b07b3eb5b5f4f3045017,interval=20,type=VM,unit=number,vc=vcva01.lab.local value=3 1538270072857240320
+
+    PS C:\> $summary = Get-FluxSummary -Verbose
+    VERBOSE: Starting Get-FluxSummary at 2018-09-29T20:18:39.5359640-05:00
+    VERBOSE: Using connection to vcva01.lab.local
+    VERBOSE: Beginning summary collection on vcva01.lab.local
+    VERBOSE: 9/29/2018 8:18:39 PM Get-VM Started execution
+    VERBOSE: 9/29/2018 8:18:39 PM Get-VM Finished execution
+    VERBOSE: Running in object mode; Data points collected successfully!
+    VERBOSE: Elapsed Processing Time: 3.9156251 seconds
+    VERBOSE: Processing Time Per VM: 0.0255923209150327 seconds
+    VERBOSE: Ending Get-FluxSummary at 2018-09-29T20:18:43.4515891-05:00
+    PS C:\>
+    PS C:\> $summary[0]
+    flux.summary.vm,host=myvm002,memorygb=2,numcpu=2,type=VM,vc=vcva01.lab.local value="green" 1538270320191168256
+
+
+    ##########################
+    ## VMHost Stats
+    ##########################
+
+    PS C:\> $EsxStats = Get-FluxCompute -ReportType VMHost -Verbose
+    VERBOSE: Starting Get-FluxCompute at 2018-09-29T20:23:06.9010263-05:00
+    VERBOSE: Using connection to vcva01.lab.local
+    VERBOSE: Beginning stat collection on vcva01.lab.local
+    VERBOSE: 9/29/2018 8:23:06 PM Get-VMHost Started execution
+    VERBOSE: 9/29/2018 8:23:07 PM Get-VMHost Finished execution
+    VERBOSE: 9/29/2018 8:23:07 PM Get-Stat Started execution
+    VERBOSE: 9/29/2018 8:23:15 PM Get-Stat Finished execution
+    VERBOSE: Running in object mode; Data points collected successfully!
+    VERBOSE: Ending Get-FluxCompute at 2018-09-29T20:23:16.6988892-05:00
+    PS C:\>
+    PS C:\> $EsxStats[0]
+    cpu.usage.average,host=esx01.lab.local,instance=20,interval=20,type=VMHost,unit=%,vc=vcva01.lab.local value=21.32 1538270595497681664
+
+
+    PS C:\> $EsxSummary = Get-FluxSummary -ReportType VMHost -Verbose
+    VERBOSE: Starting Get-FluxSummary at 2018-09-29T20:35:33.2989579-05:00
+    VERBOSE: Using connection to vcva01.lab.local
+    VERBOSE: Beginning summary collection on vcva01.lab.local
+    VERBOSE: 9/29/2018 8:35:33 PM Get-VMHost Started execution
+    VERBOSE: 9/29/2018 8:35:34 PM Get-VMHost Finished execution
+    VERBOSE: Running in object mode; Data points collected successfully!
+    VERBOSE: Ending Get-FluxSummary at 2018-09-29T20:35:39.8041996-05:00
+    PS C:\>
+    PS C:\> $EsxSummary | Select-Object -First 3
+    flux.summary.vmhost,host=esx01.lab.local,memorygb=256,numcpu=16,type=VMHost,vc=vcva01.lab.local value="green" 1538271335186569984
+
+    flux.summary.vmhost,host=esx02.lab.local,memorygb=256,numcpu=16,type=VMHost,vc=vcva01.lab.local value="green" 1538271335467371776
+
+    flux.summary.vmhost,host=esx03.lab.local,memorygb=256,numcpu=16,type=VMHost,vc=vcva01.lab.local value="green" 1538271335794974208
+    
+    ###################
+    ## Output to File
+    ###################
+    Finally, we show the non-standard technique of writing to file. Then we show some of the results.
+
+    PS C:\> Get-FluxCompute -OutputPath $HOME -Verbose
+    VERBOSE: Starting Get-FluxCompute at 2018-09-29T21:09:17.3520291-05:00
+    VERBOSE: Using connection to vcva01.lab.local
+    VERBOSE: Beginning stat collection on vcva01.lab.local
+    VERBOSE: Creating output directory for stat collection at C:\Users\mike\fluxstat
+    VERBOSE: 9/29/2018 9:09:17 PM Get-VM Started execution
+    VERBOSE: 9/29/2018 9:09:17 PM Get-VM Finished execution
+    VERBOSE: 9/29/2018 9:09:17 PM Get-Stat Started execution
+    VERBOSE: 9/29/2018 9:09:33 PM Get-Stat Finished execution
+    VERBOSE: Write succeeded: C:\Users\mike\fluxstat\fluxstat-cca0fdb5-f1fc-437a-ac50-036173cddfea.txt
+    VERBOSE: Elapsed Processing Time: 32.4988554 seconds
+    VERBOSE: Processing Time Per VM: 0.212410819607843 seconds
+    VERBOSE: Ending Get-FluxCompute at 2018-09-29T21:09:49.8508845-05:00
+    C:\Users\mike\fluxstat\fluxstat-cca0fdb5-f1fc-437a-ac50-036173cddfea.txt
+    PS C:\>
+    PS C:\> cat $home\fluxstat\fluxstat-cca0fdb5-f1fc-437a-ac50-036173cddfea.txt | more
+    cpu.usage.average,host=myvm002,interval=20,type=VM,unit=%,vc=vcva01.lab.local value=4.12 1538273373796381696
+
+    cpu.ready.summation,host=myvm002,instance=0,interval=20,type=VM,unit=millisecond,vc=vcva01.lab.local value=0.03 1538273373889982208
+
+    net.usage.average,host=myvm002,instance=vmnic3,interval=20,type=VM,unit=KBps,vc=vcva01.lab.local value=1764 1538273376011595776
+
+    --more--
 <br>
 
 -end-
