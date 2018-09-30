@@ -3,148 +3,104 @@ Function Get-FluxIOPS {
 
   <#
 
-      .DESCRIPTION
-        Gathers VMware vSphere virtual machine disk performance stats. By default, the output is InfluxDB
-        line protocol returned as an object. To output to file instead of returning objects, use the
-        OutputPath parameter.
+    .DESCRIPTION
+      Gathers VMware vSphere virtual machine disk performance stats. By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects instead of line protocol, use the PassThru switch. Also see the sibling cmdlet Write-FluxIOPS to populate InfluxDB with data points collected here.
         
-        To return pure vSphere stat objects instead of line protocol, use the PassThru switch. Also see
-        the sibling cmdlet Write-FluxIOPS to populate InfluxDB with data points collected here.
-        
-        The cmdlet herein understands NFS, VMFS and vSAN. We automatically gather the appropriate stat
-        types accordingly. Also see the sibling cmdlet Write-FluxIOPS to populate the InfluxDB database with
-        the data points collected here.
+      This cmdlet understands NFS, VMFS and vSAN and gathers the appropriate stat types accordingly. Also see the sibling cmdlet Write-FluxIOPS to populate the InfluxDB database with the data points collected here.
 
-        Note: For Compute performance such as cpu, memory and network, see the Get-FluxCompute cmdlet.
+      Note: For Compute performance such as cpu, memory and network, see the Get-FluxCompute cmdlet.
 
-      .NOTES
-        Script:     Get-FluxIOPS.ps1
-        Version:    1.0.0.1
-        Author:     Mike Nisk
-        Prior Art:  Based on vFlux Stats Kit
-        Supports:   PSEdition Core 6.0, and PowerShell 3.0 to 5.1
-        Supports:   PowerCLI 6.5.x or later (10.x preferred)
-        Supports:   Windows, Linux, macOS
+    .NOTES
+      Script:     Get-FluxIOPS.ps1
+      Author:     Mike Nisk
+      Prior Art:  Based on vFlux Stats Kit
+      Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
+      Supports:   PowerCLI 6.5.4 or later (10.x preferred)
+      Supports:   Windows, Linux, macOS
 
-      .PARAMETER Server
-        String. The IP Address or DNS name of exactly one vCenter Server machine.
-        For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
+    .PARAMETER Server
+      String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
       
-      .PARAMETER Credential
-        PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
+    .PARAMETER Credential
+      PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
 
-      .PARAMETER CredentialPath
-        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
+    .PARAMETER CredentialPath
+      String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
 
-      .PARAMETER User
-        String. Optionally, enter a user for connecting to vCenter Server.
+    .PARAMETER User
+      String. Optionally, enter a user for connecting to vCenter Server.
 
-      .PARAMETER Password
-        String. Optionally, enter a password for connecting to vCenter Server.
+    .PARAMETER Password
+      String. Optionally, enter a password for connecting to vCenter Server.
 
-      .PARAMETER ShowStats
-        Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
+    .PARAMETER ShowStats
+      Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
 
-      .PARAMETER OutputPath
-        String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME
-        or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the
-        filename for each stat result and save save the results in line protocol.
+    .PARAMETER OutputPath
+      String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
 
-      .PARAMETER PassThru
-        Switch. Optionally, return native vSphere stat objects instead of line protocol.
+    .PARAMETER PassThru
+      Switch. Optionally, return native vSphere stat objects instead of line protocol.
       
-      .PARAMETER IgnoreCertificateErrors
-        Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate
-        errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to
-        allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1
-        we also add a temporary runtime dotnet type to help the current session ignore invalid certificates. f you find
-        that you are still having issues, consider downloading the certificate from your vCenter Server instead.
+    .PARAMETER IgnoreCertificateErrors
+      Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
 
-      .PARAMETER IgnoreDatastore
-        String. Exactly one string value to ignore. For example "*local*". Also see IgnoreDsRegEx which is complementary to this parameter.
+    .PARAMETER IgnoreDatastore
+      String. Exactly one string value to ignore. For example "*local*". Also see IgnoreDsRegEx which is complementary to this parameter.
       
-      .PARAMETER IgnoreDsRegEx
-        String. Ignore datastores using a regular expression. Also see IgnoreDatastore which is complementary to this parameter.
+    .PARAMETER IgnoreDsRegEx
+      String. Ignore datastores using a regular expression. Also see IgnoreDatastore which is complementary to this parameter.
       
-      .PARAMETER Cardinality
-        String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected.
-        Tab complete through options Standard, Advanced or Overkill. The default is Standard.
+    .PARAMETER Cardinality
+      String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
 
-      .PARAMETER Strict
-        Switch. Optionally, prevent fall-back to hard-coded script values for login.
+    .PARAMETER Strict
+      Switch. Optionally, prevent fall-back to hard-coded script values for login. Activate this switch to use SSPI / passthrough authentication.
 
-      .EXAMPLE
-      Get-FluxIOPS
+    .EXAMPLE
+    $iops = Get-FluxIOPS
 
-      This example gathered IOPS from the currently connected $Default:VIServer.
+    This example gathered IOPS from the currently connected $Default:VIServer.
 
-      .EXAMPLE
-      $vc = 'vcsa01.lab.local'
-      Get-FluxIOPS -Server $vc
+    .EXAMPLE
+    $vc = 'vcsa01.lab.local'
+    $iops = Get-FluxIOPS -Server $vc
 
-      This example gathers stats from the $vc vcenter server, and returns the output to screen.
-      Because credentials were not provided, the script uses passthrough / SSPI.
+    This example gathered stats from the $vc vcenter server, and returned the output to screen.
+    Because credentials were not provided, the script used passthrough / SSPI.
 
-      .EXAMPLE
-      $credsVC = Get-Credential administrator@vsphere.local
-      $stats = Get-FluxIOPS -Server $vc -Credential $credsVC
+    .EXAMPLE
+    $credsVC = Get-Credential administrator@vsphere.local
+    $iops = Get-FluxIOPS -Server $vc -Credential $credsVC
       
-      This example used the Credential functionality of the script, and also saved the stats to a variable.
+    This example used the Credential functionality of the script, and saved the stats to a variable.
 
-      .EXAMPLE
-      Get-FluxIOPS -Server $vc -ShowStats
+    .EXAMPLE
+    Get-FluxIOPS -Server $vc -ShowStats
 
-      This example shows additional info on screen.
+    This example shows additional info on screen.
 
-      .EXAMPLE
-      Get-FluxIOPS -OutputPath $HOME -Verbose
-      cat $home/fluxstat/fluxstat*.txt | more
+    .EXAMPLE
+    Get-FluxIOPS -OutputPath $HOME -Verbose
+    cat $home/fluxstat/fluxstat*.txt | more
 
-      This example collected stats and wrote them to the specified directory $HOME.
+    This example collected stats and wrote them to the specified directory $HOME.
       
-      .EXAMPLE
-      Get-FluxIOPS | Write-FluxIOPS
+    .EXAMPLE
+    Get-FluxIOPS | Write-FluxIOPS
 
-      This example collected realtime stats and wrote them to InfluxDB. We do this by taking the object returned from
-      Get-FluxIOPS and piping to Write-FluxIOPS. See the next example for preferred strict syntax (no piping).
+    This example collected IOPS stats and wrote them to InfluxDB by taking the object returned from Get-FluxIOPS and piping to Write-FluxIOPS. See the next example for preferred strict syntax (no piping).
 
-      .EXAMPLE
-      $stats = Get-FluxIOPS
-      Write-FluxIOPS -InputObject $stats
+    .EXAMPLE
+    $stats = Get-FluxIOPS
+    Write-FluxIOPS -InputObject $stats
 
-      Get the stats and write them to InfluxDB using variable (more performant than the pipeline in our case).
+    Get the stats and write them to InfluxDB using variable (more performant than the pipeline in our case).
 
-      .EXAMPLE
-      1..15 | % { $stats = Get-FluxIOPS; Write-FluxIOPS -InputObject $stats; sleep 20 }
+    .EXAMPLE
+    1..15 | % { $stats = Get-FluxIOPS; Write-FluxIOPS -InputObject $stats; sleep 20 }
 
-      Gather 5 minutes of stats. Good for initial testing and populating the InfluxDB.
-      
-      APPENDIX - Writing and viewing stats
-
-        A. To write stat objects to InfluxDB, pipe the output to the sibling cmdlet Write-FluxIOPS:
-
-          Get-FluxIOPS | Write-FluxIOPS
-          
-        B. For better performance, save stat collection to a variable and then write to influx:
-        
-            $stats = Get-FluxIOPS
-            Write-FluxIOPS -InputObject $stats
-
-          You can also use the ';' character to chain two commands together:
-
-            $stats = Get-FluxIOPS; Write-FluxIOPS -InputObject $stats
-        
-        C. Optionally, to write line protocol files to disk use the OutputPath parameter:
-        
-          Get-FluxIOPS -OutputPath $HOME
-        
-        Note: To write existing text files to InfluxDB you can follow the influxdata documentation.
-        We expect you to use objects to write to InfluxDB. We only support creating text files for
-        those seeking ultra high performance upstream when writing to InfluxDB in batches (i.e.
-        batches of 5k to 16k values per write).
-
-        Tip: In Grafana, When creating each dashboard, be sure to set null values to none or it may
-          appear as though you have no stats!
+    Gather 5 minutes of stats. Good for initial testing and populating the InfluxDB.
 
   #>
 
@@ -191,7 +147,7 @@ Function Get-FluxIOPS {
       [ValidateSet('Standard','Advanced','OverKill')]
       [string]$Cardinality = 'Standard',
       
-      #Switch. Optionally, prevent fall-back to hard-coded script values.
+      #Switch. Optionally, prevent fall-back to hard-coded script values. Activate this switch to use SSPI / passthrough authentication.
       [switch]$Strict
     )
 
@@ -200,11 +156,11 @@ Function Get-FluxIOPS {
       Write-Verbose -Message ('Starting {0} at {1}' -f ($MyInvocation.Mycommand), (Get-Date -Format o))
 
       ## Supress collection, if needed.
-      $supressFile = "$HOME/supress-flux.txt"
+      $supressFile = ('{0}/supress-flux.txt' -f $HOME)
       [bool]$exists = Test-Path -Path $supressFile -PathType Leaf
       If($exists){
-        $item = Get-Item $supressFile | Select-Object -First 1
-        $itemAgeMinutes = [int]((Get-Date)-(Get-Date  $item.LastWriteTime) | Select-Object -ExpandProperty Minutes)
+        $item = Get-Item -Path $supressFile | Select-Object -First 1
+        $itemAgeMinutes = [int]((Get-Date)-(Get-Date -Date $item.LastWriteTime) | Select-Object -ExpandProperty Minutes)
         If($itemAgeMinutes -lt 60){
             Write-Verbose -Message 'Fluxor running in supress mode; No stats will be collected!'
             exit
@@ -238,14 +194,17 @@ Function Get-FluxIOPS {
       #######################################
       ## No need to edit beyond this point
       #######################################
-      
     } #End Begin
  
     Process {
       
+      If($PSVersionTable.PSVersion.Major -eq 3){
+        [bool]$PSv3 = $true
+      }
+      
       ## Start Logging
       If ($Logging -eq 'On') {
-          Start-Transcript -Append -Path ('{0}\{1}-{2}.log' -f $LogDir, $LogName, $dt)
+          Start-Transcript -Append -Path ('{0}/{1}-{2}.log' -f $LogDir, $LogName, $dt)
       }
       
       ## Handle invalid certificate errors, if needed
@@ -272,7 +231,7 @@ Function Get-FluxIOPS {
               If($CredentialPath){
                 $Credential = Get-FluxCredential -Path $CredentialPath
               }
-              Elseif(Test-Path -Path $vcCredentialPath -ea 0){
+              Elseif(Test-Path -Path $vcCredentialPath -ErrorAction SilentlyContinue){
                 $Credential = Get-FluxCredential -Path $vcCredentialPath
               }
             }
@@ -303,7 +262,7 @@ Function Get-FluxIOPS {
             }
             Elseif($vcUser -and $vcPass){
               try {
-                ## Use hard-coded defaults from begin block
+                ## Use hard-coded defaults from begin block, if not in Strict mode
                 $null = Connect-VIServer -Server $Server -User $vcUser -Password $vcPass -WarningAction SilentlyContinue -ErrorAction Stop
                 [bool]$runtimeConnection = $true
               }
@@ -338,7 +297,7 @@ Function Get-FluxIOPS {
         Throw 'vCenter Connection Required!'
       }
       Else {
-          Write-Verbose -Message ('Beginning daily collection on {0}' -f ($Global:DefaultVIServer))
+          Write-Verbose -Message ('Beginning stat collection on {0}' -f ($Global:DefaultVIServer))
       }
 
       ## Datastore Enumeration
@@ -350,11 +309,21 @@ Function Get-FluxIOPS {
       }
     
       ## In-Scope Datastores
-      If($IgnoreDatastore){
-        $dsList = $dsList | Where-Object {$_.Name -notlike $IgnoreDatastore}
+      If($PSv3){
+        If($IgnoreDatastore){
+          $dsList = $dsList | Where-Object {$_.Name -notlike $IgnoreDatastore}
+        }
+        If($IgnoreDsRegEx){
+          $dsList = $dsList | Where-Object {$_.Name -notmatch $IgnoreDsRegEx}
+        }
       }
-      If($IgnoreDsRegEx){
-        $dsList = $dsList | Where-Object {$_.Name -notmatch $IgnoreDsRegEx}
+      Else{
+        If($IgnoreDatastore){
+          $dsList = $dsList.Where{$_.Name -notlike $IgnoreDatastore}
+        }
+        If($IgnoreDsRegEx){
+          $dsList = $dsList.Where{$_.Name -notmatch $IgnoreDsRegEx}
+        }
       }
       
       ## Confirm we have datastore list, or throw
@@ -366,27 +335,51 @@ Function Get-FluxIOPS {
       }
 
       ## Handle datastores by type
-      $dsVMFS = $ds | Where-Object { $_.Type -eq 'VMFS' }
-      $dsNFS = $ds | Where-Object { $_.Type -eq 'NFS' }
-      $dsvSAN = $ds | Where-Object { $_.Name -match '^vsanDatastore' }
+      If($PSv3){
+        $dsVMFS = $ds | Where-Object { $_.Type -eq 'VMFS' }
+        $dsNFS = $ds | Where-Object { $_.Type -eq 'NFS' }
+        $dsvSAN = $ds | Where-Object { $_.Name -match '^vsanDatastore' }
+      }
+      Else{
+        $dsVMFS = $ds.Where{$_.Type -eq 'VMFS'}
+        $dsNFS = $ds.Where{$_.Type -eq 'NFS'}
+        $dsvSAN = $ds.Where{$_.Name -match '^vsanDatastore'}
+      }
 
-      ## Running VMs by storage type
+      ## Get VMFS virtual machines
       If($dsVMFS){
-        $BlockVMs = $dsVMFS | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+        If($PSv3){
+          $BlockVMs = Get-VM -Datastore $dsVMFS | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+        }
+        Else{
+          $BlockVMs = (Get-VM -Datastore $dsVMFS).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+        }
       }
       Else{
         $BlockVMs = $null
       }
       
+      ## Get NFS virtual machines
       If($dsNFS){
-        $NfsVMs = $dsNFS | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+        If($PSv3){
+          $NfsVMs = Get-VM -Datastore $dsNFS | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+        }
+        Else{
+          $NfsVMs = (Get-VM -Datastore $dsNFS).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+        }
       }
       Else{
         $NfsVMs = $null
       }
       
+      ## Get vSAN virtual machines
       If($dsvSAN){
-        $vsanVMs = $dsvSAN | Get-VM | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+        If($PSv3){
+          $vsanVMs = Get-VM -Datastore $dsvSAN | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+        }
+        Else{
+          $vsanVMs = (Get-VM -Datastore $dsvSAN).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+        }
       }
       Else{
         $vsanVMs = $null
@@ -427,7 +420,7 @@ Function Get-FluxIOPS {
         If(-Not(Test-Path -Path $strPath -PathType Container)){
           Write-Verbose -Message ('Creating output directory for stat collection at {0}' -f $Script:strPath)
           try{
-            $null = New-Item -ItemType Directory -Path $Script:strPath -wa 0 -Confirm:$false -Force -ErrorAction Stop
+            $null = New-Item -ItemType Directory -Path $Script:strPath -Confirm:$false -Force -WarningAction SilentlyContinue -ErrorAction Stop
           }
           catch{
             Write-Warning -Message ('Failed to create required folder at {0}!' -f $Script:strPath)
@@ -448,8 +441,15 @@ Function Get-FluxIOPS {
           $null = New-Item -ItemType File -Path $outFile -Force
         }
         
-        ## Collect stats
-        $stats = Get-Stat -Entity $BlockVMs -Stat $BlockStatTypes -Realtime -MaxSamples 1
+        ## Collect stats (requires virtual machine uptime of 1 hour so we 'Continue' instead of 'throw')
+        try{
+          $stats = Get-Stat -Entity $BlockVMs -Stat $BlockStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue
+        }
+        catch{
+          If($error.Exception.Message){
+            Write-Warning -Message ('{0}' -f $_.Exception.Message)
+          }
+        }
         
         ## Handle PassThru mode
         If($PassThru){
@@ -460,12 +460,17 @@ Function Get-FluxIOPS {
           foreach ($stat in $stats) {
           
               ## Handle name
-              [string]$name = ($BlockVMs | Where-Object {$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              If($PSv3){
+                [string]$name = ($BlockVMs | Where-Object {$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              }
+              Else{
+                [string]$name = ($BlockVMs.Where{$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              }
 
               ## Handle instance. There may or may not be an instance for VMFS block stats.
               [string]$instance = $stat.Instance
 
-              ## Handle measurement
+              ## Handle measurement name
               switch($Cardinality){
                 Advanced{
                   ## Cardinality of Advanced
@@ -575,8 +580,27 @@ Function Get-FluxIOPS {
             $null = New-Item -ItemType File -Path $outFile -Force
           }
         
-          ## Gather desired stats
-          $stats = Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 | Where-Object { $_.Instance -ne ''}
+          ## Gather NFS stats (requires virtual machine uptime of 1 hour so we 'Continue' instead of 'throw')
+          If($PSv3){
+            try{
+            $stats = Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue | Where-Object { $_.Instance -ne ''}
+            }
+            catch{
+              If($error.Exception.Message){
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+              }
+            }
+          }
+          Else{
+            try{
+              $stats = (Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue).Where{ $_.Instance -ne ''}
+            }
+            catch{
+              If($error.Exception.Message){
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+              }
+            }
+          }
           
           ## Handle PassThru mode
           If($PassThru){
@@ -587,12 +611,17 @@ Function Get-FluxIOPS {
             foreach ($stat in $stats) {
             
               ## Handle name
-              [string]$name = ($NfsVMs | Where-Object {$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              If($PSv3){
+                [string]$name = ($NfsVMs | Where-Object {$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              }
+              Else{
+                [string]$name = ($NfsVMs.Where{$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              }
 
               ## Handle Instance. This always exists for NFS.
               [string]$instance = $stat.Instance
 
-              ## Handle measurement
+              ## Handle measurement name
               switch($Cardinality){
                 Advanced{
                   ## Cardinality of Advanced
@@ -695,7 +724,14 @@ Function Get-FluxIOPS {
           }
         
           ## Gather stats
-          $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -Start (Get-Date).AddMinutes(-59)
+          try{
+            $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -Start (Get-Date).AddMinutes(-59) -ErrorAction Continue
+          }
+          catch{
+            If($error.Exception.Message){
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+            }
+          }
           
           ## Handle PassThru mode
           If($PassThru){
@@ -713,7 +749,7 @@ Function Get-FluxIOPS {
                   $instance = $stat.Instance
                 }
 
-                ## Handle measurement
+                ## Handle measurement name
                 switch($Cardinality){
                   Advanced{
                     ## Cardinality of Advanced
@@ -810,7 +846,7 @@ Function Get-FluxIOPS {
       ## Stop transcript logging, if any
       If ($Logging -eq 'On') {
         Write-Verbose -Message 'Stopping transcript logging for this session'
-          Stop-Transcript
+        Stop-Transcript
       }
     
       ## Announce completion

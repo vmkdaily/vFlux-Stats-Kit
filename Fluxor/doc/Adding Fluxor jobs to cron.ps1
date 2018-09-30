@@ -35,13 +35,13 @@ Step 4. Add a line to your $PROFILE to import the Fluxor module
   Import-Module $HOME/Fluxor
 
 
-Step 6. Launch PowerShell (pwsh)
+Step 5. Launch PowerShell (pwsh)
 If you have not already, launch Powershell with pwsh.
 You should be in the $HOME directory of the user by default.
 
 Note: If this is not the user that will run the stats collections, get logged in!
 
-Step 7. List the contents of your $HOME directory
+Step 6. List the contents of your $HOME directory
 As expected, we can run linux or PowerShell commands interchangably on Core Edition of PowerShell.
   
   ls -lh $HOME
@@ -54,7 +54,7 @@ or dir ~/
 
 Note: $HOME is the analog to $env:USERPROFILE of Windows (though $HOME works on Windows too).
 
-## Step 8 - Create your scripts
+## Step 7 - Create your scripts
 Alhough we have this fancy module, we still depend on you to create the scripts to run in cron.
 The important bit is the she bang (#!) at the top that tells cron to use PowwerShell.
 
@@ -71,18 +71,20 @@ This is how we determine what to place after the she bang (#!) in our cron scrip
 ## All Scripts
 Here I have created a few scripts:
 
-  PS /home/fluxor> ls -lh $HOME
-  total 24K
-  drwxr-xr-x 5 mike mike 4.0K Sep 21 13:09 Fluxor
-  drwxr-xr-x 3 mike mike 4.0K Sep 17 11:07 snap
-  -rwxrwxr-x 1 mike mike  125 Sep 18 11:59 stat-runner-compute.ps1
-  -rwxrwxr-x 1 mike mike  117 Sep 18 11:59 stat-runner-iops.ps1
-  -rwxrwxr-x 1 mike mike  135 Sep 20 12:58 stat-runner-summary-vmhost.ps1
-  -rwxrwxr-x 1 mike mike  108 Sep 20 12:55 stat-runner-summary-vm.ps1
+  PS /home/fluxor> ls -lh
+total 28K
+drwxr-xr-x 5 fluxor fluxor 4.0K Sep 29 18:31 Fluxor
+drwxr-xr-x 3 fluxor fluxor 4.0K Sep 17 11:07 snap
+-rwxrwxr-x 1 fluxor fluxor  144 Sep 29 18:24 stat-runner-compute-vmhost.ps1
+-rwxrwxr-x 1 fluxor fluxor  125 Sep 18 11:59 stat-runner-compute-vm.ps1
+-rwxrwxr-x 1 fluxor fluxor  117 Sep 18 11:59 stat-runner-iops.ps1
+-rwxrwxr-x 1 fluxor fluxor  150 Sep 21 16:41 stat-runner-summary-vmhost.ps1
+-rwxrwxr-x 1 fluxor fluxor  123 Sep 21 16:40 stat-runner-summary-vm.ps1
+PS /home/fluxor>
 
 Note: I don't really use Mike as the job runner. I create a user such as fluxor or fluxorsvc, etc.
 
-Step 9. Create cron jobs
+Step 8. Create cron jobs
 
 Login as the user that will run the jobs and:
 
@@ -94,25 +96,25 @@ Or, to run as root
 
 Note: The recommendation is not to run as root.
 
-Step 10. Use the editor of your choice when prompted by crontab.
+Step 9. Use the editor of your choice when prompted by crontab.
 By default, you will use nano. This means just arrow down to the bottom and enter your text.
 When ready, save changes in nano with <CTRL + x>, press <y> and hit <enter> on your keyboard.
 
 The following cron example gathers performance and summary information every 10 minutes
 
       # m h  dom mon dow   command
-      */10 * * * * ~/stat-runner-compute.ps1
+      */10 * * * * ~/stat-runner-compute-vm.ps1
+      */10 * * * * ~/stat-runner-compute-vmhost.ps1
       */10 * * * * ~/stat-runner-iops.ps1
       */10 * * * * ~/stat-runner-summary-vm.ps1
       */10 * * * * ~/stat-runner-summary-vmhost.ps1
 
-
-Step 11. About preventing dip in stat collection
+Step 10. About preventing dip in stat collection
 You need to determine the timing of your systems and how long the jobs take to run.
 Use Grafana to review the stats for last hour or 30 minutes to observe the dips.
 Also consider running "Get-FluxCrontab -Count 20" or similar to watch your jobs.
 
-Consider too, that some missing stats may be okay. When looking at the data for past
+Consider that some missing stats may be okay; When looking at the data for past
 week, month, etc. over time, you will not notice. However, if you need more precise
 views (i.e. down to 5 or 1 minute accuracy) then you may consider tweaking.
 

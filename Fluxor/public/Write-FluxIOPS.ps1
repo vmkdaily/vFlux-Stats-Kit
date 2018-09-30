@@ -3,68 +3,57 @@ Function Write-FluxIOPS {
 
   <#
 
-      .DESCRIPTION
-        Writes one or more IOPS stat objects containing Influx line protocol to an InfluxDB Server using PowerShell web cmdlets.
+    .DESCRIPTION
+      Writes one or more IOPS stat objects containing Influx line protocol to an InfluxDB Server using PowerShell web cmdlets. To feed stats to this cmdlet, use Get-FluxIOPS.
+
+    .NOTES
+      Script:        Write-FluxIOPS.ps1
+      Prior Art:     Based on vFlux Stats Kit
+      Author:        Mike Nisk
+      Supports:      Core Editions of PowerShell 6.x and later, and PowerShell 3.0 to 5.1
+      Supports:      Windows, Linux, macOS as clients for collecting and writing stats
+      Supports:      Windows only (and non-core editions of PowerShell) for Credential on disk feature (optional)
+      Known Issues:  InfluxDB needs a PowerShell culture of en-US for InfluxDB writes that are float (i.e. 97.5).
         
-        To feed stats to this cmdlet, use Get-FluxIOPS.
+    .PARAMETER Server
+      String. The IP Address or DNS name of exactly one InfluxDB Server machine (or localhost). If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
 
-      .NOTES
-        Script:        Write-FluxIOPS.ps1
-        Version:       1.0.0.1
-        Prior Art:     Based on vFlux Stats Kit
-        Author:        Mike Nisk
-        Supports:      Core Editions of PowerShell 6.0 and later (including 6.1), and PowerShell 3.0 to 5.1
-        Supports:      Windows, Linux, macOS as clients for collecting and writing stats
-        Supports:      Windows only (and non-core editions of PowerShell) for Credential on disk feature (optional)
-        Known Issues:  InfluxDB needs a PowerShell culture of en-US for InfluxDB writes that are float (i.e. 97.5).
-        
-      .PARAMETER Server
-        String. The IP Address or DNS name of exactly one InfluxDB Server machine (or localhost).
-        If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
+    .PARAMETER Credential
+      PSCredential. Optionally, provide a PSCredential containing the login for InfluxDB Server. If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
 
-      .PARAMETER Credential
-        PSCredential. Optionally, provide a PSCredential containing the login for InfluxDB Server.
-        If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
+    .PARAMETER CredentialPath
+      String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsInfluxDB.enc.xml". This parameter is not supported on Core Editions of PowerShell.
 
-      .PARAMETER CredentialPath
-        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsInfluxDB.enc.xml".
-        This parameter is not supported on Core Editions of PowerShell.
+    .PARAMETER Port
+      Integer. The InfluxDB Port to connect to.
 
-      .PARAMETER Port
-        Integer. The InfluxDB Port to connect to.
+    .PARAMETER Database
+      String. The name of the InfluxDB database to write to.
 
-      .PARAMETER Database
-        String. The name of the InfluxDB database to write to.
-
-      .PARAMETER InputObject
-        Object. A PowerShell object to write to InfluxDB. The InputObject parameter requires strict InluxDB line protocol syntax such as that returned by Get-FluxIOPS.
+    .PARAMETER InputObject
+      Object. A PowerShell object to write to InfluxDB. The InputObject parameter requires strict InluxDB line protocol syntax such as that returned by Get-FluxIOPS.
       
-      .PARAMETER Throttle
-        Switch. Optionally, activate the Throttle switch to limit total InfluxDB connections to 2 for this runtime.
-        By default we close the connection after each write, so this is not needed. Using the Throttle switch is
-        slightly more elegant than the default, and is recommended for power users. The benefit would be that
-        instead of closing all connections from client to InfluxDB, we simply limit the maximum to 2.
+    .PARAMETER Throttle
+      Switch. Optionally, activate the Throttle switch to limit total InfluxDB connections to 2 for this runtime. By default we close the connection after each write, so this is not needed. Using the Throttle switch is slightly more elegant than the default, and is recommended for power users. The benefit would be that instead of closing all connections from client to InfluxDB, we simply limit the maximum to 2.
 
-      .PARAMETER ShowRestActivity
-        Switch. Optionally, return additional REST connection detail by setting to $true. Only works when the Verbose switch is also used.
+    .PARAMETER ShowRestActivity
+      Switch. Optionally, return additional REST connection detail by setting to $true. Only works when the Verbose switch is also used.
       
-      .PARAMETER ShowModuleEfficiency
-        Switch. Optionally, show the start and end of the function as it is called. This is only to highlight differences between piping and using variable and is only observable in Verbose mode. Hint piping is less efficient for us.
+    .PARAMETER ShowModuleEfficiency
+      Switch. Optionally, show the start and end of the function as it is called. This is only to highlight differences between piping and using variable and is only observable in Verbose mode. Hint piping is less efficient for us.
       
-      .PARAMETER PassThru
-        Switch. Optionally, return output (if any) from the web cmdlet write operation. There should be no output on successful writes.
+    .PARAMETER PassThru
+      Switch. Optionally, return output (if any) from the web cmdlet write operation. There should be no output on successful writes.
       
-      .PARAMETER Strict
-        Switch. Optionally, prevent fall-back to hard-coded script values for login
+    .PARAMETER Strict
+      Switch. Optionally, prevent fall-back to hard-coded script values for login
 
-      .EXAMPLE
-      Write-FluxIOPS -InputObject $iops
+    .EXAMPLE
+    Write-FluxIOPS -InputObject $iops
 
-      This example shows the basic syntax. You would need to first populate the $iops variable using $iops = Get-FluxIOPS -Server 'myvcenter'.
-      Notice there is no Server provided, because we expect you to be on localhost, though you could populate the Server parameter to write
-      to a remote InfluxDB server. We use REST API either way (local or remote).
+    This example shows the basic syntax. You would need to first populate the $iops variable using $iops = Get-FluxIOPS -Server 'myvcenter'. Notice there is no Server provided, because we expect you to be on localhost, though you could populate the Server parameter to write to a remote InfluxDB server. We use REST API either way (local or remote).
 
-    #>
+  #>
 
     [CmdletBinding()]
     param (
@@ -208,7 +197,7 @@ Function Write-FluxIOPS {
         
         ## Logging
         If($Logging -eq 'On'){
-            Start-Transcript -Append -Path ('{0}\{1}-{2}.log' -f $LogDir, $LogName, $dt)
+            Start-Transcript -Append -Path ('{0}/{1}-{2}.log' -f $LogDir, $LogName, $dt)
         }
 
         ## Rest headers
@@ -268,5 +257,5 @@ Function Write-FluxIOPS {
         If($Passthru){
           return $resultInfo
         }
-      } #End End
+    } #End End
 }

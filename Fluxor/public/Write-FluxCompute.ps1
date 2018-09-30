@@ -3,69 +3,57 @@ Function Write-FluxCompute {
 
   <#
 
-      .DESCRIPTION
-        Writes one or more compute stat objects containing Influx line protocol to an InfluxDB Server using PowerShell web cmdlets.
-        
-        To feed stats to this cmdlet, use Get-FluxCompute.
+    .DESCRIPTION
+      Writes one or more compute stat objects containing Influx line protocol to an InfluxDB Server using PowerShell web cmdlets. To feed stats to this cmdlet, use Get-FluxCompute.
 
-      .NOTES
-        Script:        Write-FluxCompute.ps1
-        Version:       1.0.0.1
-        Prior Art:     Based on vFlux Stats Kit
-        Author:        Mike Nisk
-        Supports:      Core Editions of PowerShell 6.0 and later (including 6.1), and PowerShell 3.0 to 5.1
-        Supports:      Windows, Linux, macOS as clients for collecting and writing stats
-        Supports:      Windows only (and non-core editions of PowerShell) for Credential on disk feature (optional)
-        Known Issues:  InfluxDB needs a PowerShell culture of en-US for InfluxDB writes that are float (i.e. 97.5)
+    .NOTES
+      Script:        Write-FluxCompute.ps1
+      Prior Art:     Based on vFlux Stats Kit
+      Author:        Mike Nisk
+      Supports:      Core Editions of PowerShell 6.x and later, and PowerShell 3.0 to 5.1
+      Supports:      Windows, Linux, macOS as clients for collecting and writing stats
+      Supports:      Windows only (and non-core editions of PowerShell) for Credential on disk feature (optional)
+      Known Issues:  InfluxDB needs a PowerShell culture of en-US for InfluxDB writes that are float (i.e. 97.5)
         
-      .PARAMETER Server
-        String. The IP Address or DNS name of exactly one InfluxDB Server machine (or localhost).
-        If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
+    .PARAMETER Server
+      String. The IP Address or DNS name of exactly one InfluxDB Server machine (or localhost). If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
 
-      .PARAMETER Credential
-        PSCredential. Optionally, provide a PSCredential containing the login for InfluxDB Server.
-        If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
+    .PARAMETER Credential
+      PSCredential. Optionally, provide a PSCredential containing the login for InfluxDB Server. If not populated, we use the value indicated in the "InfluxDB Prefs" section of the script.
     
-      .PARAMETER CredentialPath
-        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsInfluxDB.enc.xml".
-        This parameter is not supported on Core Editions of PowerShell.
+    .PARAMETER CredentialPath
+      String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsInfluxDB.enc.xml". This parameter is not supported on Core Editions of PowerShell.
 
-      .PARAMETER Port
-        Integer. The InfluxDB Port to connect to.
+    .PARAMETER Port
+      Integer. The InfluxDB Port to connect to.
 
-      .PARAMETER Database
-        String. The name of the InfluxDB database to write to.
+    .PARAMETER Database
+      String. The name of the InfluxDB database to write to.
 
-      .PARAMETER InputObject
-        Object. A PowerShell object to write to InfluxDB. The InputObject parameter requires strict InluxDB line protocol syntax such as that returned by Get-FluxCompute.
+    .PARAMETER InputObject
+      Object. A PowerShell object to write to InfluxDB. The InputObject parameter requires strict InluxDB line protocol syntax such as that returned by Get-FluxCompute.
       
-      .PARAMETER Throttle
-        Switch. Optionally, activate the Throttle switch to limit total InfluxDB connections to 2 for this runtime.
-        By default we close the connection after each write, so this is not needed. Using the Throttle switch is
-        slightly more elegant than the default, and is recommended for power users. The benefit would be that
-        instead of closing all connections from client to InfluxDB, we simply limit the maximum to 2.
+    .PARAMETER Throttle
+      Switch. Optionally, activate the Throttle switch to limit total InfluxDB connections to 2 for this runtime. By default we close the connection after each write, so this is not needed. Using the Throttle switch is slightly more elegant than the default, and is recommended for power users. The benefit would be that instead of closing all connections from client to InfluxDB, we simply limit the maximum to 2.
       
-      .PARAMETER ShowRestActivity
-        Switch. Optionally, return additional REST connection detail by setting to $true. Only works when the Verbose switch is also used.
+    .PARAMETER ShowRestActivity
+      Switch. Optionally, return additional REST connection detail by setting to $true. Only works when the Verbose switch is also used.
       
-      .PARAMETER ShowModuleEfficiency
-        Switch. Optionally, show the start and end of the function as it is called.
+    .PARAMETER ShowModuleEfficiency
+      Switch. Optionally, show the start and end of the function as it is called.
       
-      .PARAMETER PassThru
-        Switch. Optionally, return output (if any) from the web cmdlet write operation. There should be no output on successful writes.
+    .PARAMETER PassThru
+      Switch. Optionally, return output (if any) from the web cmdlet write operation. There should be no output on successful writes.
 
-      .PARAMETER Strict
-        Switch. Optionally, prevent fall-back to hard-coded script values.
+    .PARAMETER Strict
+      Switch. Optionally, prevent fall-back to hard-coded script values.
 
-      .EXAMPLE
-      Write-FluxCompute -InputObject $stats
+    .EXAMPLE
+    Write-FluxCompute -InputObject $stats
 
-      This example shows the basic syntax. You would need to first populate the $stats variable using $stats = Get-FluxCompute -Server 'myvcenter'.
-      Notice there is no Server provided, because we expect you to be on localhost, though you could populate the Server parameter to write
-      to a remote InfluxDB server. We use REST API either way (local or remote).
+    This example shows the basic syntax. You would need to first populate the $stats variable using $stats = Get-FluxCompute -Server 'myvcenter'. Notice there is no Server provided, because we expect you to be on localhost, though you could populate the Server parameter to write to a remote InfluxDB server. We use REST API either way (local or remote).
 
-      
-    #>
+  #>
 
     [CmdletBinding()]
     param (
@@ -121,153 +109,153 @@ Function Write-FluxCompute {
     
     Process {
 
-        ## InfluxDB Prefs.
-        $InfluxStruct = New-Object -TypeName PSObject -Property @{
-            InfluxDbServer             = 'localhost'                                 #IP Address, DNS Name, or 'localhost'. Alternatively, populate the Server parameter at runtime.
-            InfluxDbPort               = 8086                                        #The default for InfluxDB is 8086. Alternatively, populate the Port parameter at runtime.
-            InfluxDbName               = 'compute'                                   #To follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI if you have not already. To access the cli, SSH to your server and type influx.
-            InfluxDbUser               = 'esx'                                       #This value is ignored in Strict mode. To follow the examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI. Not needed if PSCredential is provided.
-            InfluxDbPassword           = 'esx'                                       #This value is ignored in Strict mode. To follow the examples, set to 'esx' here [see above example to create InfluxDB user and set password at the same time]. Not needed if PSCredential is provided.
-            InfluxCredentialPath       = "$HOME/CredsInfluxDB.enc.xml"               #Credential files are not supported on Core editions of PowerShell. Enter the Path to encrypted xml Credential file on disk. We ignore plain text entries if this or Credential is populated. To create a PSCredential on disk see "help New-FluxCredential".
-        }
+      ## InfluxDB Prefs.
+      $InfluxStruct = New-Object -TypeName PSObject -Property @{
+          InfluxDbServer             = 'localhost'                                 #IP Address, DNS Name, or 'localhost'. Alternatively, populate the Server parameter at runtime.
+          InfluxDbPort               = 8086                                        #The default for InfluxDB is 8086. Alternatively, populate the Port parameter at runtime.
+          InfluxDbName               = 'compute'                                   #To follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI if you have not already. To access the cli, SSH to your server and type influx.
+          InfluxDbUser               = 'esx'                                       #This value is ignored in Strict mode. To follow the examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI. Not needed if PSCredential is provided.
+          InfluxDbPassword           = 'esx'                                       #This value is ignored in Strict mode. To follow the examples, set to 'esx' here [see above example to create InfluxDB user and set password at the same time]. Not needed if PSCredential is provided.
+          InfluxCredentialPath       = "$HOME/CredsInfluxDB.enc.xml"               #Credential files are not supported on Core editions of PowerShell. Enter the Path to encrypted xml Credential file on disk. We ignore plain text entries if this or Credential is populated. To create a PSCredential on disk see "help New-FluxCredential".
+      }
 
-        ## User Prefs
-        [string]$Logging             = 'Off'                                         #PowerShell transcript logging 'On' or 'Off'
-        [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
-        [string]$LogName             = 'fluxcompute-ps-transcript'                   #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
-        [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day.
+      ## User Prefs
+      [string]$Logging             = 'Off'                                         #PowerShell transcript logging 'On' or 'Off'
+      [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
+      [string]$LogName             = 'fluxcompute-ps-transcript'                   #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
+      [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day.
     
-        #######################################
-        ## No need to edit beyond this point
-        #######################################
+      #######################################
+      ## No need to edit beyond this point
+      #######################################
 
-        ## Handle Server parameter
-        If($Server){
-            $InfluxStruct.InfluxDbServer = $Server
+      ## Handle Server parameter
+      If($Server){
+          $InfluxStruct.InfluxDbServer = $Server
+      }
+      Else{
+        $Server = $InfluxStruct.InfluxDbServer
+
+      }
+        
+      ## Handle credential from disk
+      If(!$Credential -and !$User){
+        If($IsCoreCLR){
+          Write-Verbose -Message 'Running on Core Edition of PowerShell'
         }
         Else{
-          $Server = $InfluxStruct.InfluxDbServer
-
-        }
-        
-        ## Handle credential from disk
-        If(!$Credential -and !$User){
-          If($IsCoreCLR){
-            Write-Verbose -Message 'Running on Core Edition of PowerShell'
+          If($CredentialPath){
+            $Credential = Get-FluxCredential -Path $CredentialPath
+          }
+          Elseif(Test-Path -Path $InfluxStruct.InfluxCredentialPath -ea 0){
+            $Credential = Get-FluxCredential -Path $InfluxStruct.InfluxCredentialPath
           }
           Else{
-            If($CredentialPath){
-              $Credential = Get-FluxCredential -Path $CredentialPath
-            }
-            Elseif(Test-Path -Path $InfluxStruct.InfluxCredentialPath -ea 0){
-              $Credential = Get-FluxCredential -Path $InfluxStruct.InfluxCredentialPath
-            }
-            Else{
-              throw 'Script cannot proceed without InfluxDB login!'
-            }
+            throw 'Script cannot proceed without InfluxDB login!'
           }
         }
+      }
 
-        ## Handle Credential parameter
-        If($Credential){
-          $InfluxStruct.InfluxDbUser = $Credential.GetNetworkCredential().UserName
-          $InfluxStruct.InfluxDbPassword = $Credential.GetNetworkCredential().Password
-        }
-        ## Handle User and Password parameter
-        Elseif($user -and $Password){
-          $InfluxStruct.InfluxDbUser = $User
-          $InfluxStruct.InfluxDbPassword = $Password
-        }
-        Elseif($Strict){
-          Throw 'InfluxDB login required!'
-        }
-        Else{
-          Write-Verbose -Message ('Connecting to influxdb as {0}' -f $InfluxStruct.InfluxDbUser)
-        }
+      ## Handle Credential parameter
+      If($Credential){
+        $InfluxStruct.InfluxDbUser = $Credential.GetNetworkCredential().UserName
+        $InfluxStruct.InfluxDbPassword = $Credential.GetNetworkCredential().Password
+      }
+      ## Handle User and Password parameter
+      Elseif($user -and $Password){
+        $InfluxStruct.InfluxDbUser = $User
+        $InfluxStruct.InfluxDbPassword = $Password
+      }
+      Elseif($Strict){
+        Throw 'InfluxDB login required!'
+      }
+      Else{
+        Write-Verbose -Message ('Connecting to influxdb as {0}' -f $InfluxStruct.InfluxDbUser)
+      }
         
-        ## Handle Port
-        If($Port){
-            $InfluxStruct.InfluxDbPort = $Port
-        }
+      ## Handle Port
+      If($Port){
+          $InfluxStruct.InfluxDbPort = $Port
+      }
         
-        ## Handle InfluxDB database name
-        If($Database){
-            $InfluxStruct.InfluxDbName = $Database
-        }
+      ## Handle InfluxDB database name
+      If($Database){
+          $InfluxStruct.InfluxDbName = $Database
+      }
 
-        ## Create the Rest header
-        $authheader = 'Basic ' + ([Convert]::ToBase64String([Text.encoding]::ASCII.GetBytes(('{0}:{1}' -f $InfluxStruct.InfluxDbUser, $InfluxStruct.InfluxDbPassword))))
+      ## Create the Rest header
+      $authheader = 'Basic ' + ([Convert]::ToBase64String([Text.encoding]::ASCII.GetBytes(('{0}:{1}' -f $InfluxStruct.InfluxDbUser, $InfluxStruct.InfluxDbPassword))))
         
-        ## URI for InfluxDB /write HTTP endpoint
-        $uri = ('http://{0}:{1}/write?db={2}' -f $InfluxStruct.InfluxDbServer, $InfluxStruct.InfluxDbPort, $InfluxStruct.InfluxDbName)
+      ## URI for InfluxDB /write HTTP endpoint
+      $uri = ('http://{0}:{1}/write?db={2}' -f $InfluxStruct.InfluxDbServer, $InfluxStruct.InfluxDbPort, $InfluxStruct.InfluxDbName)
 
-        ## Handler for InfluxDB connection limit
-        $ServicePoint = [System.Net.ServicePointManager]::FindServicePoint($uri)
-        If($Throttle){
-            $null = $ServicePoint.ConnectionLimit = 2
-        }
+      ## Handler for InfluxDB connection limit
+      $ServicePoint = [System.Net.ServicePointManager]::FindServicePoint($uri)
+      If($Throttle){
+          $null = $ServicePoint.ConnectionLimit = 2
+      }
         
-        ## Logging
-        If($Logging -eq 'On'){
-            Start-Transcript -Append -Path ('{0}\{1}-{2}.log' -f $LogDir, $LogName, $dt)
-        }
+      ## Logging
+      If($Logging -eq 'On'){
+          Start-Transcript -Append -Path ('{0}/{1}-{2}.log' -f $LogDir, $LogName, $dt)
+      }
 
-        ## Rest headers
-        $headers = @{
-            'Authorization' = $authheader
-        }
+      ## Rest headers
+      $headers = @{
+          'Authorization' = $authheader
+      }
 
-        ## Report array for PassThru
-        $resultInfo = @()
+      ## Report array for PassThru
+      $resultInfo = @()
         
-        ## Handle one or more InputObjects 
-        Foreach($obj in $InputObject){
+      ## Handle one or more InputObjects 
+      Foreach($obj in $InputObject){
           
-          ## Handle Rest parameters
-          $sParamRest = @{
-              'Headers'     = $headers
-              'Uri'         = $uri
-              'Method'      = 'POST'
-              'Body'        = $obj
-              'Verbose'     = $ShowRestActivity
-              'ErrorAction' = 'Stop'
-          }
-
-          ## Write it
-          Try {
-              $result = (Invoke-RestMethod @sParamRest)
-          }
-          Catch {
-              Write-Warning -Message 'Problem writing object to InfluxDB!'
-              Write-Warning -Message ('{0}' -f $_.Exception.Message)
-              throw
-          }
-          $resultInfo += $result
+        ## Handle Rest parameters
+        $sParamRest = @{
+            'Headers'     = $headers
+            'Uri'         = $uri
+            'Method'      = 'POST'
+            'Body'        = $obj
+            'Verbose'     = $ShowRestActivity
+            'ErrorAction' = 'Stop'
         }
 
-        ## Close it
-        $null = $ServicePoint.CloseConnectionGroup('')
-    }
-    
-    End {
+        ## Write it
+        Try {
+            $result = (Invoke-RestMethod @sParamRest)
+        }
+        Catch {
+            Write-Warning -Message 'Problem writing object to InfluxDB!'
+            Write-Warning -Message ('{0}' -f $_.Exception.Message)
+            throw
+        }
+        $resultInfo += $result
+      }
+
+      ## Close it
+      $null = $ServicePoint.CloseConnectionGroup('')
+  }
+  
+  End {
         
-        ## Session cleanup, InfluxDB
-        $null = $ServicePoint.CloseConnectionGroup('')
+      ## Session cleanup, InfluxDB
+      $null = $ServicePoint.CloseConnectionGroup('')
     
-        ## Stop transcript logging, if any
-        If ($Logging -eq 'On') {
-          Write-Verbose -Message 'Stopping transcript logging for this session'
-            Stop-Transcript
-        }
+      ## Stop transcript logging, if any
+      If ($Logging -eq 'On') {
+        Write-Verbose -Message 'Stopping transcript logging for this session'
+          Stop-Transcript
+      }
         
-        ## Announce completion
-        If($ShowModuleEfficiency){
-          Write-Verbose -Message ('Ending {0} at {1}' -f ($MyInvocation.Mycommand), (Get-Date -Format o))
-        }
+      ## Announce completion
+      If($ShowModuleEfficiency){
+        Write-Verbose -Message ('Ending {0} at {1}' -f ($MyInvocation.Mycommand), (Get-Date -Format o))
+      }
 
-        ## Output
-        If($Passthru){
-          return $resultInfo
-        }
-      } #End End
+      ## Output
+      If($Passthru){
+        return $resultInfo
+      }
+  } #End End
 }

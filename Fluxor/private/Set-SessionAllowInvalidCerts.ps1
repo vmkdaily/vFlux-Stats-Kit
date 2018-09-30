@@ -2,10 +2,7 @@
     
     <#
         .DESCRIPTION
-            Creates a TrustAllCertsPolicy for this session.
-            Supports only Windows Desktop builds of PowerShell
-            such as version 3.0, 4.0, 5.0 and 5.1. Does not support PowerShell Core.
-            If Core CLR is detected, we skip.
+            Creates a TrustAllCertsPolicy for this session. Supports only Windows Desktop builds of PowerShell such as version 3.0, 4.0, 5.0 and 5.1. Does not support PowerShell Core. Not supported on Core Editions of PowerShell.
         
         .NOTES
             Script:       Set-SessionAllowInvalidCerts
