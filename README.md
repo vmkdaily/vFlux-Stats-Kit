@@ -21,6 +21,9 @@ The Fluxor module gathers very basic stats and is intended for you to extend.
 However, if you just want a ready-made kit, check out the following items.
 
 vSAN - For vSAN done right, see the free sexigraf appliance (deployed as OVA).
+
+<br>
+
 [http://www.sexigraf.fr/](http://www.sexigraf.fr/)
 
 <br>
@@ -28,15 +31,18 @@ vSAN - For vSAN done right, see the free sexigraf appliance (deployed as OVA).
 Telegraf - You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use
 the amazing custom scripts added by influx data community member @prydin. It does more/better than Fluxor
 and uses pure api and proper integers when writing line protocol.
- 
+
+<br>
+
 [https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md](https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md)
 
 <br>
 
 #### Community dashboards
 This one is a community dashboard using the old version of the vFlux-Stats-Kit.
-[https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
+<br>
 
+[https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
 
 <br>
 
