@@ -3,10 +3,10 @@ Function Get-FluxSummary {
 
   <#
 
-    .DESCRIPTION
+      .DESCRIPTION
       Gathers basic VMware vSphere summary information such as amount of cpu and memory for virtual machines or ESXi hosts.
 
-    .NOTES
+      .NOTES
       Script:     Get-FluxSummary.ps1
       Author:     Mike Nisk
       Prior Art:  Based on vFlux Stats Kit
@@ -14,56 +14,56 @@ Function Get-FluxSummary {
       Supports:   PowerCLI 6.5.4 or later (10.x preferred)
       Supports:   Windows, Linux, macOS
 
-    .PARAMETER Server
+      .PARAMETER Server
       String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
     
-    .PARAMETER Credential
+      .PARAMETER Credential
       PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
 
-    .PARAMETER CredentialPath
+      .PARAMETER CredentialPath
       String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
 
-    .PARAMETER User
+      .PARAMETER User
       String. Optionally, enter a user for connecting to vCenter Server.
 
-    .PARAMETER Password
+      .PARAMETER Password
       String. Optionally, enter a password for connecting to vCenter Server.
       
-    .PARAMETER ReportType
+      .PARAMETER ReportType
       String. The entity type to get summary details from ('VM' or 'VMHost'). The default is VM which returns stats for all virtual machines. To return host stats instead of virtual machines, tab complete or enter 'VMHost' as the value for the ReportType parameter.
 
-    .PARAMETER OutputPath
+      .PARAMETER OutputPath
       String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
 
-    .PARAMETER PassThru
+      .PARAMETER PassThru
       Switch. Optionally, return native vSphere stat objects instead of line protocol.
       
-    .PARAMETER IgnoreCertificateErrors
+      .PARAMETER IgnoreCertificateErrors
       Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
 
-    .PARAMETER Cardinality
+      .PARAMETER Cardinality
       String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
 
-    .PARAMETER Strict
+      .PARAMETER Strict
       Switch. Optionally, prevent fall-back to hard-coded script values. Activate this switch to use SSPI / passthrough authentication.
 
-    .EXAMPLE
-    $vc = 'vcvsa01.lab.local'
-    Get-FluxSummary -Server $vc | Write-FluxSummary
+      .EXAMPLE
+      $vc = 'vcvsa01.lab.local'
+      Get-FluxSummary -Server $vc | Write-FluxSummary
 
-    This example collected summary information for virtual machines and wrote the data points to InfluxDB by piping the object returned from Get-FluxSummary into Write-FluxSummary.
+      This example collected summary information for virtual machines and wrote the data points to InfluxDB by piping the object returned from Get-FluxSummary into Write-FluxSummary.
 
-    .EXAMPLE
-    $summaryVM = Get-FluxSummary -Server $vc
-    Write-FluxSummary -InputObject $summaryVM
+      .EXAMPLE
+      $summaryVM = Get-FluxSummary -Server $vc
+      Write-FluxSummary -InputObject $summaryVM
 
-    Get the summary data points for virtual machines and write them to InfluxDB using a variable (more performant than the pipeline).
+      Get the summary data points for virtual machines and write them to InfluxDB using a variable (more performant than the pipeline).
 
-    .EXAMPLE
-    $summaryVMHost = Get-FluxSummary -Server $vc -ReportType VMHost
-    Write-FluxSummary -InputObject $summaryVMHost
+      .EXAMPLE
+      $summaryVMHost = Get-FluxSummary -Server $vc -ReportType VMHost
+      Write-FluxSummary -InputObject $summaryVMHost
 
-    This example collected summary data points for ESXi hosts by using the ReportType parameter.
+      This example collected summary data points for ESXi hosts by using the ReportType parameter.
 
   #>
 
@@ -150,6 +150,9 @@ Function Get-FluxSummary {
 
     Process {
 
+        ## Add some swing
+        Start-Sleep -Seconds (7..73 | Get-Random)
+        
         If($PSVersionTable.PSVersion.Major -eq 3){
           [bool]$PSv3 = $true
         }

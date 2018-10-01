@@ -3,12 +3,12 @@ Function Get-FluxCompute {
 
   <#
 
-    .DESCRIPTION
+      .DESCRIPTION
       Gathers VMware vSphere 'Compute' performance stats such as cpu, memory and network from virtual machines or ESXi hosts.  By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects (instead of line protocol), use the PassThru switch. Also see the sibling cmdlet Write-FluxCompute to populate InfluxDB with data points collected here.
 
       Note: For disk performance, see the Get-FluxIOPS cmdlet.
 
-    .NOTES
+      .NOTES
       Script:     Get-FluxCompute.ps1
       Author:     Mike Nisk
       Prior Art:  Based on vFlux Stats Kit
@@ -16,75 +16,75 @@ Function Get-FluxCompute {
       Supports:   PowerCLI 6.5.4 or later (10.x preferred)
       Supports:   Windows, Linux, macOS
 
-    .PARAMETER Server
+      .PARAMETER Server
       String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
     
-    .PARAMETER Credential
+      .PARAMETER Credential
       PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
 
-    .PARAMETER CredentialPath
+      .PARAMETER CredentialPath
       String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
       
-    .PARAMETER User
+      .PARAMETER User
       String. Optionally, enter a user for connecting to vCenter Server.
 
-    .PARAMETER Password
+      .PARAMETER Password
       String. Optionally, enter a password for connecting to vCenter Server.
       
-    .PARAMETER ReportType
+      .PARAMETER ReportType
       String. The entity type to get stats for ('VM' or 'VMHost'). The default is VM which returns stats for all virtual machines. To return host stats instead of virtual machines, tab complete or enter 'VMHost' as the value for the ReportType parameter.
     
-    .PARAMETER ShowStats
+      .PARAMETER ShowStats
       Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
 
-    .PARAMETER OutputPath
+      .PARAMETER OutputPath
       String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
 
-    .PARAMETER PassThru
+      .PARAMETER PassThru
       Switch. Optionally, return native vSphere stat objects instead of line protocol.
       
-    .PARAMETER IgnoreCertificateErrors
+      .PARAMETER IgnoreCertificateErrors
       Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
     
-    .PARAMETER Cardinality
+      .PARAMETER Cardinality
       String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
 
-    .PARAMETER Strict
+      .PARAMETER Strict
       Switch. Optionally, prevent fall-back to hard-coded script values. Activate this switch to use SSPI / passthrough authentication.
         
-    .EXAMPLE
-    $vc = 'vcsa01.lab.local'
-    Get-FluxCompute -Server $vc -OutputPath $HOME
-    cat $home/fluxstat*.txt | more
+      .EXAMPLE
+      $vc = 'vcsa01.lab.local'
+      Get-FluxCompute -Server $vc -OutputPath $HOME
+      cat $home/fluxstat*.txt | more
 
-    This example collected stats and wrote them to a file in line protocol format by populating the OutputPath parameter.
+      This example collected stats and wrote them to a file in line protocol format by populating the OutputPath parameter.
       
-    .EXAMPLE
-    PS C:\> $stats = Get-FluxCompute
-    PS C:\> 
-    PS C:\> $stats | more
-    PS C:\> $stats | Out-GridView
+      .EXAMPLE
+      PS C:\> $stats = Get-FluxCompute
+      PS C:\> 
+      PS C:\> $stats | more
+      PS C:\> $stats | Out-GridView
 
-    This example showed how to review the stats collected in the default mode, which returns PowerShell objects.
-    The returned object is an array of crafted line protocol strings including the requisite new line characters.
-    The example shows common techniques for reviewing the returned object output.
+      This example showed how to review the stats collected in the default mode, which returns PowerShell objects.
+      The returned object is an array of crafted line protocol strings including the requisite new line characters.
+      The example shows common techniques for reviewing the returned object output.
     
-    .EXAMPLE
-    Get-FluxCompute | Write-FluxCompute
+      .EXAMPLE
+      Get-FluxCompute | Write-FluxCompute
 
-    This example collected realtime stats and wrote them to InfluxDB. We do this by taking the object returned from
-    Get-FluxCompute and piping that to the sibling cmdlet Write-FluxCompute, which allows pipeline input for the 
-    InputObject parameter. See the next example for more strict syntax.
+      This example collected realtime stats and wrote them to InfluxDB. We do this by taking the object returned from
+      Get-FluxCompute and piping that to the sibling cmdlet Write-FluxCompute, which allows pipeline input for the 
+      InputObject parameter. See the next example for more strict syntax.
 
-    .EXAMPLE
-    $stats = Get-FluxCompute
-    Write-FluxCompute -InputObject $stats
+      .EXAMPLE
+      $stats = Get-FluxCompute
+      Write-FluxCompute -InputObject $stats
 
-    Get the stats and write them to InfluxDB in a more performant way than the pipeline.
+      Get the stats and write them to InfluxDB in a more performant way than the pipeline.
       
-    .EXAMPLE
-    1..15 | % { $stats = Get-FluxCompute; Write-FluxCompute -InputObject $stats; sleep 20 }
-    Gather 5 minutes of stats. Good for initial testing and populating the InfluxDB.
+      .EXAMPLE
+      1..15 | % { $stats = Get-FluxCompute; Write-FluxCompute -InputObject $stats; sleep 20 }
+      Gather 5 minutes of stats. Good for initial testing and populating the InfluxDB.
       
   #>
 
@@ -177,6 +177,9 @@ Function Get-FluxCompute {
     } #End Begin
 
     Process {
+    
+        ## Add some swing
+        Start-Sleep -Seconds (7..73 | Get-Random)
 
         If($PSVersionTable.PSVersion.Major -eq 3){
           [bool]$PSv3 = $true
@@ -355,7 +358,12 @@ Function Get-FluxCompute {
             foreach ($vmStat in $stats){
 
                 ## Handle name
-                [string]$name = ($VMs | Where-Object {$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                If($PSv3){
+                  [string]$name = ($VMs | Where-Object {$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                }
+                Else{
+                  [string]$name = (($VMs).Where{$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                }
               
                 ## Handle instance
                 [string]$instance = $vmStat.Instance
@@ -461,7 +469,7 @@ Function Get-FluxCompute {
                 Write-Verbose -Message ('Write succeeded: {0}' -f $outFile)
               }
             }
-                  
+            
             ## Runtime Summary
             $vCenterEndDTM = (Get-Date)
             $vmCount = ($VMs | Measure-Object).count
@@ -531,7 +539,12 @@ Function Get-FluxCompute {
             foreach($hostStat in $stats){
               
                 ## Handle name
-                [string]$name = $VMHosts | Where-Object {$_.Id -match $hostStat.EntityId} | Select-Object -ExpandProperty Name
+                If($PSv3){
+                    [string]$name = $VMHosts | Where-Object {$_.Id -match $hostStat.EntityId} | Select-Object -ExpandProperty Name
+                }
+                Else{
+                  [string]$name = ($VMHosts).Where{$_.Id -match $hostStat.EntityId} | Select-Object -ExpandProperty Name
+                }
 
                 ## Handle instance
                 [string]$instance = $hostStat.Instance

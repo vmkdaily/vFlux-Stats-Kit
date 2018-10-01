@@ -29,6 +29,11 @@ Function Invoke-FluxCLI {
         Switch. Interact with the InfluxDB CLI directly. Type quit or exit to return to PowerShell.
 
       .EXAMPLE
+      Invoke-FluxCLI -ScriptText "auth esx esx"
+
+      This example sent a login request to the influx binary using the username of 'esx' and password 'esx'. You should start sessions like this if not already connected.
+
+      .EXAMPLE
       PS /home/fluxor> Invoke-FluxCLI -Version
       PS /home/fluxor> InfluxDB shell version: 1.6.3
 
@@ -61,7 +66,11 @@ Function Invoke-FluxCLI {
       summary
 
       This example shows that we now have all of the required databases to use Fluxor (iops, compute, and summary). Feel free to add more and test other data streams too!
-  #>
+  
+      .EXAMPLE
+      PS /home/mike> Invoke-FluxCLI -ScriptText 'use database summary'
+
+      #>
 
   [CmdletBinding()]
   Param(

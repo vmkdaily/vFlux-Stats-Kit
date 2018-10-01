@@ -3,9 +3,7 @@ Function Get-FluxCredential {
 
   <#
       .DESCRIPTION
-        Get a PSCredential from file for use with the Fluxor module.
-        
-        This function does not support Core Editions of PowerShell (i.e. not supported on Linux or macOS).
+        Get a PSCredential from file for use with the Fluxor module. This function does not support Core Editions of PowerShell.
         
       .NOTES
         Script:     Get-FluxCredential.ps1
@@ -22,9 +20,12 @@ Function Get-FluxCredential {
       $credsInflux = Get-FluxCredential -Credential "$Home/CredsInfluxDB.enc.xml"
     
       This example imported a credential from disk and saved it to a variable for runtime use.
-    
-      .OUTPUTS
-      Encrypted credential saved to xml
+
+    .INPUTS
+    encrypted xml credential file
+
+    .OUTPUTS
+    PSCredential Object
 
   #>
 
