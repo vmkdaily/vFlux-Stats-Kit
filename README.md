@@ -46,6 +46,13 @@ This one is a community dashboard using the old version of the vFlux-Stats-Kit.
 
 <br>
 
+This one uses the new Telegraf plugin and some excellent custom charts:
+<br>
+
+[https://jorgedelacruz.uk/2018/10/01/looking-for-the-perfect-dashboard-influxdb-telegraf-and-grafana-part-xii-native-telegraf-plugin-for-vsphere/](https://jorgedelacruz.uk/2018/10/01/looking-for-the-perfect-dashboard-influxdb-telegraf-and-grafana-part-xii-native-telegraf-plugin-for-vsphere/)
+
+<br>
+
 #### Issues / Ideas
 Please open an issue for any creative ideas or feedback (or to share a dashboard or post!).
 Of course, if you find an issue or an OS that we cannot handle yet, please do let us know.
