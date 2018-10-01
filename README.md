@@ -16,8 +16,42 @@ using the `OutputPath` parameter or return raw vSphere API objects with the
 
 [Collecting and Visualizing vSphere Performance Metrics with PowerCLI, InfluxDB and Grafana on CentOS 7](https://vmkdaily.ghost.io/collecting-and-visualizing-vsphere-performance-metrics-with-powercli-influxdb-and-grafana-on-centos-7/)
 
-#### Community Posts, Dashboards, etc.
+#### Alternatives
+The Fluxor module gathers very basic stats and is intended for you to extend.
+However, if you just want a ready-made kit, check out the following items.
+
+vSAN - For vSAN done right, see the free sexigraf appliance (deployed as OVA).
+
+<br>
+
+[http://www.sexigraf.fr/](http://www.sexigraf.fr/)
+
+<br>
+
+Telegraf - You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use
+the amazing custom scripts added by influx data community member @prydin. It does more/better than Fluxor
+and uses pure api and proper integers when writing line protocol.
+
+<br>
+
+[https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md](https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md)
+
+<br>
+
+#### Community dashboards
+This one is a community dashboard using the old version of the vFlux-Stats-Kit.
+<br>
+
 [https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
+
+<br>
+
+This one uses the new Telegraf plugin and some excellent custom charts:
+<br>
+
+[https://jorgedelacruz.uk/2018/10/01/looking-for-the-perfect-dashboard-influxdb-telegraf-and-grafana-part-xii-native-telegraf-plugin-for-vsphere/](https://jorgedelacruz.uk/2018/10/01/looking-for-the-perfect-dashboard-influxdb-telegraf-and-grafana-part-xii-native-telegraf-plugin-for-vsphere/)
+
+<br>
 
 #### Issues / Ideas
 Please open an issue for any creative ideas or feedback (or to share a dashboard or post!).
@@ -122,14 +156,38 @@ We support any flavor, so launch-away (`PowerShell.exe`, `pwsh`, `pwsh-preview`,
 ## Step 8. Import the Fluxor Module
 Point to the Fluxor folder to import the module with Import-Module.
 
-    Import-Module $HOME/Fluxor -Verbose
+    PS C:\> Import-Module C:\scripts\Fluxor -Verbose
+    VERBOSE: Loading module from path 'C:\scripts\Fluxor\Fluxor.psd1'.
+    VERBOSE: Loading module from path 'C:\scripts\Fluxor\Fluxor.psm1'.
+    VERBOSE: Importing function 'Get-FluxCompute'.
+    VERBOSE: Importing function 'Get-FluxCrontab'.
+    VERBOSE: Importing function 'Get-FluxIOPS'.
+    VERBOSE: Importing function 'Get-FluxSummary'.
+    VERBOSE: Importing function 'Invoke-FluxCLI'.
+    VERBOSE: Importing function 'New-FluxCredential'.
+    VERBOSE: Importing function 'Write-FluxCompute'.
+    VERBOSE: Importing function 'Write-FluxIOPS'.
+    VERBOSE: Importing function 'Write-FluxSummary'.
+    PS C:\>
 
 <br>
 
 ## Step 9. Get Fluxor Commands
 Use `Get-Command` (or alias `gcm`) to see the available cmdlets.
 
-    gcm -Module Fluxor
+    PS C:\> gcm -Module Fluxor
+
+    CommandType     Name                                               Version
+    -----------     ----                                               -------
+    Function        Get-FluxCompute                                    1.0.0.2
+    Function        Get-FluxCrontab                                    1.0.0.2
+    Function        Get-FluxIOPS                                       1.0.0.2
+    Function        Get-FluxSummary                                    1.0.0.2
+    Function        Invoke-FluxCLI                                     1.0.0.2
+    Function        New-FluxCredential                                 1.0.0.2
+    Function        Write-FluxCompute                                  1.0.0.2
+    Function        Write-FluxIOPS                                     1.0.0.2
+    Function        Write-FluxSummary                                  1.0.0.2
 
 <br>
 
