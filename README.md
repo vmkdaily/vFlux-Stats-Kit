@@ -8,7 +8,7 @@ Welcome to the `Fluxor` module, part of the `vFlux-Stats-Kit`.
 #### Purpose
 The Fluxor module gathers performance stats from `VMware vSphere` and writes them
 to a local or remote `InfluxDB` time series database. Optionally, output to file
-using the `OutputPath` parameter or return raw vSphere API objects with the
+using the `OutputPath` parameter, or return raw vSphere API objects with the
 `PassThru` parameter.
 
 #### Official Blog Posts
