@@ -121,7 +121,7 @@ To use passthrough authentication leave the `Strict` parameter set to $true (the
 <br>
 
 #### Using the plain text value in script
-Set Strict to $false to use the plain text value in the script. Dot his for Get and Write functions of Fluxor unless providing a Credential or CredentialPath.
+Set `Strict` to `$false` to use the plain text value in the script. If using the plain text option (`-Strict:$false`) remember to use it on the `Get` and `Write` functions of the Fluxor module.
 
     $stats = Get-FluxCompute -Strict:$false
 
@@ -565,7 +565,6 @@ Let's summarize by showing all of the main stats cmdlets being used in verbose m
 
     net.usage.average,host=myvm002,instance=vmnic3,interval=20,type=VM,unit=KBps,vc=vcva01.lab.local value=1764 1538273376011595776
 
-    --more--
 <br>
 
 -end-
