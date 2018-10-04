@@ -565,7 +565,6 @@ Let's summarize by showing all of the main stats cmdlets being used in verbose m
 
     net.usage.average,host=myvm002,instance=vmnic3,interval=20,type=VM,unit=KBps,vc=vcva01.lab.local value=1764 1538273376011595776
 
-    --more--
 <br>
 
 -end-
