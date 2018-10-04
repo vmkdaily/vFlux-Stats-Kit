@@ -4,58 +4,64 @@ Function Get-FluxIOPS {
   <#
 
       .DESCRIPTION
-      Gathers VMware vSphere virtual machine disk performance stats. By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects instead of line protocol, use the PassThru switch. Also see the sibling cmdlet Write-FluxIOPS to populate InfluxDB with data points collected here.
+        Gathers VMware vSphere virtual machine disk performance stats. By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects instead of line protocol, use the PassThru switch. Also see the sibling cmdlet Write-FluxIOPS to populate InfluxDB with data points collected here.
         
-      This cmdlet understands NFS, VMFS and vSAN and gathers the appropriate stat types accordingly. Also see the sibling cmdlet Write-FluxIOPS to populate the InfluxDB database with the data points collected here.
+        This cmdlet understands NFS, VMFS and vSAN and gathers the appropriate stat types accordingly. Also see the sibling cmdlet Write-FluxIOPS to populate the InfluxDB database with the data points collected here.
 
-      Note: For Compute performance such as cpu, memory and network, see the Get-FluxCompute cmdlet.
+        Note: For Compute performance such as cpu, memory and network, see the Get-FluxCompute cmdlet.
 
       .NOTES
-      Script:     Get-FluxIOPS.ps1
-      Author:     Mike Nisk
-      Prior Art:  Based on vFlux Stats Kit
-      Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
-      Supports:   PowerCLI 6.5.4 or later (10.x preferred)
-      Supports:   Windows, Linux, macOS
+        Script:     Get-FluxIOPS.ps1
+        Author:     Mike Nisk
+        Prior Art:  Based on vFlux Stats Kit
+        Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
+        Supports:   PowerCLI 6.5.4 or later (10.x preferred)
+        Supports:   Windows, Linux, macOS
 
       .PARAMETER Server
-      String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
+        String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
       
       .PARAMETER Credential
-      PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
+        PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
 
       .PARAMETER CredentialPath
-      String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
+        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
 
       .PARAMETER User
-      String. Optionally, enter a user for connecting to vCenter Server.
+        String. Optionally, enter a user for connecting to vCenter Server.
 
       .PARAMETER Password
-      String. Optionally, enter a password for connecting to vCenter Server.
+        String. Optionally, enter a password for connecting to vCenter Server.
 
       .PARAMETER ShowStats
-      Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
+        Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
 
       .PARAMETER OutputPath
-      String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
+        String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
 
       .PARAMETER PassThru
-      Switch. Optionally, return native vSphere stat objects instead of line protocol.
+        Switch. Optionally, return native vSphere stat objects instead of line protocol.
       
       .PARAMETER IgnoreCertificateErrors
-      Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
+        Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
 
       .PARAMETER IgnoreDatastore
-      String. Exactly one string value to ignore. For example "*local*". Also see IgnoreDsRegEx which is complementary to this parameter.
+        String. Exactly one string value to ignore. For example "*local*". Also see IgnoreDsRegEx which is complementary to this parameter.
       
       .PARAMETER IgnoreDsRegEx
-      String. Ignore datastores using a regular expression. Also see IgnoreDatastore which is complementary to this parameter.
+        String. Ignore datastores using a regular expression. Also see IgnoreDatastore which is complementary to this parameter.
       
       .PARAMETER Cardinality
-      String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
+        String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
+
+      .PARAMETER Logging
+        Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
+
+      .PARAMETER MaxJitter 
+        Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
 
       .PARAMETER Strict
-      Switch. Optionally, prevent fall-back to hard-coded script values for login. Activate this switch to use SSPI / passthrough authentication.
+        Boolean. Prevents fall-back to hard-coded script values for login credential if any.
 
       .EXAMPLE
       $iops = Get-FluxIOPS
@@ -147,8 +153,15 @@ Function Get-FluxIOPS {
       [ValidateSet('Standard','Advanced','OverKill')]
       [string]$Cardinality = 'Standard',
       
-      #Switch. Optionally, prevent fall-back to hard-coded script values. Activate this switch to use SSPI / passthrough authentication.
-      [switch]$Strict
+      #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
+      [switch]$Logging,
+      
+      #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
+      [ValidateRange(0,120)]
+      [int]$MaxJitter = 0,
+      
+      #Boolean. Prevents fall-back to hard-coded script values for login credential if any.
+      [bool]$Strict = $true
     )
 
     Begin {
@@ -167,19 +180,24 @@ Function Get-FluxIOPS {
         }
       }
 
-      ## User Prefs
-      [string]$Logging             = 'Off'                                         #PowerShell transcript logging 'On' or 'Off'
+      ## Logging (only used if Logging switch is activated)
       [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
       [string]$LogName             = 'flux-iops-ps-transcript'                     #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
-      [string]$statLeaf            = 'fluxstat'                                    #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
       [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day
-      [string]$DisplayNameSpacer   = '\ '                                          #We perform a -replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
-      [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core Editions of PowerShell. Enter the path to an encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
       
-      ## Plain text option
-      If(-Not($Strict)){
-        [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored in Strict mode or if we have PSCredential. Optionally, enter an existing read-only user on vCenter Server
-        [string]$vcPass              = 'VMware123!!'                               #This value is ignored in Strict mode or if we have PSCredential. Optionally, enter the password for the desired vCenter Server user.
+      ## Output file name leaf (only used when OutputPath is populated)
+      [string]$statLeaf            = 'fluxstat'                                    #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
+      
+      ## Handle spaces in virtual machine names
+      [string]$DisplayNameSpacer   = '\ '                                          #We perform a -replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
+      
+      ## Handle Credential from disk by hard-coded path
+      [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+      
+      ## Handle plain text credential
+      If($Strict -eq $false){
+        [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored by default unless the Strict parameter is set to $false.
+        [string]$vcPass              = 'VMware123!!'                               #This value is ignored by default unless the Strict parameter is set to $false.
       }
       
       ## Stat preferences block VMs
@@ -194,19 +212,24 @@ Function Get-FluxIOPS {
       #######################################
       ## No need to edit beyond this point
       #######################################
+      
     } #End Begin
  
     Process {
       
-      ## Add some swing
-      Start-Sleep -Seconds (7..73 | Get-Random)
-        
+      ## Handle jitter
+      If($MaxJitter -ge 1){
+        [int]$intRandom = (1..$MaxJitter | Get-Random)
+        Write-Verbose -Message ('Awaiting jitter offset of {0} seconds' -f $intRandom)
+        Start-Sleep -Seconds (1..$MaxJitter | Get-Random)
+      }
+      
       If($PSVersionTable.PSVersion.Major -eq 3){
         [bool]$PSv3 = $true
       }
       
       ## Start Logging
-      If ($Logging -eq 'On') {
+      If ($Logging) {
           Start-Transcript -Append -Path ('{0}/{1}-{2}.log' -f $LogDir, $LogName, $dt)
       }
       
@@ -265,7 +288,7 @@ Function Get-FluxIOPS {
             }
             Elseif($vcUser -and $vcPass){
               try {
-                ## Use hard-coded defaults from begin block, if not in Strict mode
+                ## Use hard-coded defaults, if Strict is false.
                 $null = Connect-VIServer -Server $Server -User $vcUser -Password $vcPass -WarningAction SilentlyContinue -ErrorAction Stop
                 [bool]$runtimeConnection = $true
               }
@@ -305,7 +328,7 @@ Function Get-FluxIOPS {
 
       ## Datastore Enumeration
       try{
-        $dsList = Get-Datastore -ErrorAction Stop
+        $dsList = Get-Datastore -Server $global:DefaultVIServer -ErrorAction Stop
       }
       catch{
         throw
@@ -352,10 +375,10 @@ Function Get-FluxIOPS {
       ## Get VMFS virtual machines
       If($dsVMFS){
         If($PSv3){
-          $BlockVMs = Get-VM -Datastore $dsVMFS | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+          $BlockVMs = Get-VM -Datastore $dsVMFS -Server $Global:DefaultVIServer | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
         }
         Else{
-          $BlockVMs = (Get-VM -Datastore $dsVMFS).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+          $BlockVMs = (Get-VM -Datastore $dsVMFS -Server $Global:DefaultVIServer).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
         }
       }
       Else{
@@ -365,10 +388,10 @@ Function Get-FluxIOPS {
       ## Get NFS virtual machines
       If($dsNFS){
         If($PSv3){
-          $NfsVMs = Get-VM -Datastore $dsNFS | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+          $NfsVMs = Get-VM -Datastore $dsNFS -Server $Global:DefaultVIServer | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
         }
         Else{
-          $NfsVMs = (Get-VM -Datastore $dsNFS).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+          $NfsVMs = (Get-VM -Datastore $dsNFS -Server $Global:DefaultVIServer).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
         }
       }
       Else{
@@ -378,10 +401,10 @@ Function Get-FluxIOPS {
       ## Get vSAN virtual machines
       If($dsvSAN){
         If($PSv3){
-          $vsanVMs = Get-VM -Datastore $dsvSAN | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+          $vsanVMs = Get-VM -Datastore $dsvSAN -Server $Global:DefaultVIServer | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
         }
         Else{
-          $vsanVMs = (Get-VM -Datastore $dsvSAN).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+          $vsanVMs = (Get-VM -Datastore $dsvSAN -Server $Global:DefaultVIServer).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
         }
       }
       Else{
@@ -596,7 +619,7 @@ Function Get-FluxIOPS {
           }
           Else{
             try{
-              $stats = (Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue).Where{ $_.Instance -ne ''}
+              $stats = (Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue).Where{$_.Instance -ne ''}
             }
             catch{
               If($error.Exception.Message){
@@ -847,7 +870,7 @@ Function Get-FluxIOPS {
       }
       
       ## Stop transcript logging, if any
-      If ($Logging -eq 'On') {
+      If($Logging){
         Write-Verbose -Message 'Stopping transcript logging for this session'
         Stop-Transcript
       }

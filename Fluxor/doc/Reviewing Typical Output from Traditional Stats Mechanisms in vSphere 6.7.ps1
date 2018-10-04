@@ -1,11 +1,9 @@
 ﻿<#
 
     ## APPENDIX
-    This document is unrelated to any custom modules created or used for performance gathering.
-    Here we use the raw vSphere cmdlets or API where designated. It may be helpful to see the
-    native cmdlets at work. This is performed using vSphere 6.7.
-    
-     
+    This document is unrelated to any Fluxor functions. Here we simply use the raw vSphere cmdlets or API where designated.
+    This is included only because it may be helpful to see the native cmdlets at work. This is performed using vSphere 6.7.
+
     ###############
     ## VSAN STATS
     ###############
@@ -36,6 +34,7 @@
 
         In the above, we used the default time range (did not specify start), and returned all default vSAN stat results for this virtual machine.
         Currently in vSphere 6.7 this will quietly try to return you the past 24 hours. To specify something more like RealTime, use StartTime parameter.
+        In the Fluxor module (not show here), we return past hour for vSan virtual machines.
 
     3. Show only non-zero values:
        Observe the total count of stat objects returned (i.e. each one has a timestamp, metricname and value).
@@ -55,13 +54,16 @@
 
 
     ###################
-    ## GET-STAT STATS
+    ## GET-STAT
     ###################
+    For virtual machines that are not vSAN, the Fluxor module uses the native VMware cmdlet Get-Stat.
+    As such, we show a native example of Get-Stat below.
 
-    3. Expected output from Get-Stat:
+    4. Expected output from Get-Stat:
 
     Get-Stat -Entity (Get-VM 'MyVM') -Realtime -MaxSamples 1
 
     Tip: you can also use the PassThru switch of the Fluxor cmdlets to get the vSphere API result object like we get above.
     This is compared the the module default for Fluxor which presents everything in InfluxDB line protocol.
+
 #>

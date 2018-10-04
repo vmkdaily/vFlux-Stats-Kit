@@ -4,53 +4,59 @@ Function Get-FluxCompute {
   <#
 
       .DESCRIPTION
-      Gathers VMware vSphere 'Compute' performance stats such as cpu, memory and network from virtual machines or ESXi hosts.  By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects (instead of line protocol), use the PassThru switch. Also see the sibling cmdlet Write-FluxCompute to populate InfluxDB with data points collected here.
+        Gathers VMware vSphere 'Compute' performance stats such as cpu, memory and network from virtual machines or ESXi hosts.  By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects (instead of line protocol), use the PassThru switch. Also see the sibling cmdlet Write-FluxCompute to populate InfluxDB with data points collected here.
 
-      Note: For disk performance, see the Get-FluxIOPS cmdlet.
+        Note: For disk performance, see the Get-FluxIOPS cmdlet.
 
       .NOTES
-      Script:     Get-FluxCompute.ps1
-      Author:     Mike Nisk
-      Prior Art:  Based on vFlux Stats Kit
-      Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
-      Supports:   PowerCLI 6.5.4 or later (10.x preferred)
-      Supports:   Windows, Linux, macOS
+        Script:     Get-FluxCompute.ps1
+        Author:     Mike Nisk
+        Prior Art:  Based on vFlux Stats Kit
+        Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
+        Supports:   PowerCLI 6.5.4 or later (10.x preferred)
+        Supports:   Windows, Linux, macOS
 
       .PARAMETER Server
-      String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
+        String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
     
       .PARAMETER Credential
-      PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
+        PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
 
       .PARAMETER CredentialPath
-      String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
+        String. Optionally, provide the path to a PSCredential on disk such as "$HOME/CredsVcLab.enc.xml". This parameter is not supported on Core Editions of PowerShell.
       
       .PARAMETER User
-      String. Optionally, enter a user for connecting to vCenter Server.
+        String. Optionally, enter a user for connecting to vCenter Server.
 
       .PARAMETER Password
-      String. Optionally, enter a password for connecting to vCenter Server.
+        String. Optionally, enter a password for connecting to vCenter Server.
       
       .PARAMETER ReportType
-      String. The entity type to get stats for ('VM' or 'VMHost'). The default is VM which returns stats for all virtual machines. To return host stats instead of virtual machines, tab complete or enter 'VMHost' as the value for the ReportType parameter.
+        String. The entity type to get stats for ('VM' or 'VMHost'). The default is VM which returns stats for all virtual machines. To return host stats instead of virtual machines, tab complete or enter 'VMHost' as the value for the ReportType parameter.
     
       .PARAMETER ShowStats
-      Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
+        Switch. Optionally, activate this switch to show a subset of collected stats on-screen.
 
       .PARAMETER OutputPath
-      String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
+        String. Only needed if saving to file. To use this parameter, enter the path to a folder such as $HOME or "$HOME/MyStats". This should be of type container (i.e. a folder). We will automatically create the filename for each stat result and save save the results in line protocol.
 
       .PARAMETER PassThru
-      Switch. Optionally, return native vSphere stat objects instead of line protocol.
+        Switch. Optionally, return native vSphere stat objects instead of line protocol.
       
       .PARAMETER IgnoreCertificateErrors
-      Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
+        Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
     
       .PARAMETER Cardinality
-      String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
+        String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
+
+      .PARAMETER Logging
+        Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
+
+      .PARAMETER MaxJitter 
+        Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
 
       .PARAMETER Strict
-      Switch. Optionally, prevent fall-back to hard-coded script values. Activate this switch to use SSPI / passthrough authentication.
+        Boolean. Prevents fall-back to hard-coded script values for login credential if any.
         
       .EXAMPLE
       $vc = 'vcsa01.lab.local'
@@ -74,7 +80,7 @@ Function Get-FluxCompute {
 
       This example collected realtime stats and wrote them to InfluxDB. We do this by taking the object returned from
       Get-FluxCompute and piping that to the sibling cmdlet Write-FluxCompute, which allows pipeline input for the 
-      InputObject parameter. See the next example for more strict syntax.
+      InputObject parameter.
 
       .EXAMPLE
       $stats = Get-FluxCompute
@@ -129,9 +135,16 @@ Function Get-FluxCompute {
       #String. Optionally, increase the Cardinality of data points collected. The default is Standard and changing this is not recommended in most cases.
       [ValidateSet('Standard','Advanced','OverKill')]
       [string]$Cardinality = 'Standard',
-    
-      #Switch. Optionally, prevent fall-back to hard-coded script values. Activate this switch to use SSPI / passthrough authentication.
-      [switch]$Strict
+      
+      #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
+      [switch]$Logging,
+      
+      #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
+      [ValidateRange(0,120)]
+      [int]$MaxJitter = 0,
+      
+      #Boolean. Prevents fall-back to hard-coded script values for login credential if any.
+      [bool]$Strict = $true
 
     )
 
@@ -151,19 +164,24 @@ Function Get-FluxCompute {
           }
         }
 
-        ## User Prefs
-        [string]$Logging             = 'Off'                                         #PowerShell transcript logging 'On' or 'Off'
+        ## Logging (only used if Logging switch is activated)
         [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
         [string]$LogName             = 'flux-compute-ps-transcript'                  #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
+        [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day by default.
+        
+        ## Output file name leaf (only used when OutputPath is populated)
         [string]$statLeaf            = 'fluxstat'                                    #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
-        [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day
+        
+        ## Handle spaces in virtual machine names
         [string]$DisplayNameSpacer   = '\ '                                          #We perform a replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
-        [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core Editions of PowerShell. Enter the path to an encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+        
+        ## Handle Credential from disk by hard-coded path
+        [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
     
-        ## Plain text option
-        If(-Not($Strict)){
-          [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored in Strict mode or if we have PSCredential. Optionally, enter an existing read-only user on vCenter Server
-          [string]$vcPass              = 'VMware123!!'                               #This value is ignored in Strict mode or if we have PSCredential. Optionally, enter the password for the desired vCenter Server user.
+        ## Handle plain text credential
+        If($Strict -eq $false){
+          [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored by default unless the Strict parameter is set to $false.
+          [string]$vcPass              = 'VMware123!!'                               #This value is ignored by default unless the Strict parameter is set to $false.
         }
       
         ## stat preferences
@@ -178,15 +196,19 @@ Function Get-FluxCompute {
 
     Process {
     
-        ## Add some swing
-        Start-Sleep -Seconds (7..73 | Get-Random)
-
+        ## Handle jitter
+        If($MaxJitter -ge 1){
+          [int]$intRandom = (1..$MaxJitter | Get-Random)
+          Write-Verbose -Message ('Awaiting jitter offset of {0} seconds' -f $intRandom)
+          Start-Sleep -Seconds (1..$MaxJitter | Get-Random)
+        }
+        
         If($PSVersionTable.PSVersion.Major -eq 3){
           [bool]$PSv3 = $true
         }
       
         ## Start Logging
-        If($Logging -eq 'On'){
+        If($Logging){
             Start-Transcript -Append -Path ('{0}/{1}-{2}.log' -f $LogDir, $LogName, $dt)
         }
       
@@ -247,7 +269,7 @@ Function Get-FluxCompute {
               }
               Elseif($vcUser -and $vcPass){
                 try {
-                  ## Use hard-coded defaults from begin block, if not in Strict mode
+                  ## Use hard-coded defaults, if Strict is false.
                   $null = Connect-VIServer -Server $Server -User $vcUser -Password $vcPass -WarningAction SilentlyContinue -ErrorAction Stop
                   [bool]$runtimeConnection = $true
                 }
@@ -312,7 +334,7 @@ Function Get-FluxCompute {
           ## Enumerate VM list
           If($PSv3){
             try{
-              $VMs = Get-VM -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+              $VMs = Get-VM -Server $Global:DefaultVIServer -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more virtual machines!'
@@ -321,7 +343,7 @@ Function Get-FluxCompute {
           }
           Else{
             try{
-              $VMs = (Get-VM -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+              $VMs = (Get-VM -Server $Global:DefaultVIServer -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more virtual machines!'
@@ -362,7 +384,7 @@ Function Get-FluxCompute {
                   [string]$name = ($VMs | Where-Object {$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
                 }
                 Else{
-                  [string]$name = (($VMs).Where{$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                  [string]$name = ($VMs.Where{$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
                 }
               
                 ## Handle instance
@@ -493,7 +515,7 @@ Function Get-FluxCompute {
           ## Enumerate VMHost objects
           If($PSv3){
             try{
-              $VMHosts = Get-VMHost -ErrorAction Stop | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
+              $VMHosts = Get-VMHost -Server $Global:DefaultVIServer -ErrorAction Stop | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more VMHosts!'
@@ -502,7 +524,7 @@ Function Get-FluxCompute {
           }
           Else{
             try{
-              $VMHosts = (Get-VMHost -ErrorAction Stop).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
+              $VMHosts = (Get-VMHost -Server $Global:DefaultVIServer -ErrorAction Stop).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more VMHosts!'
@@ -510,7 +532,7 @@ Function Get-FluxCompute {
             }
           }
         
-          ## Get the stats (requires an entity uptime of 1 hour, so we 'continue' instead of 'throw'
+          ## Get the stats (requires an entity uptime of 1 hour, so we 'continue' instead of 'throw')
           try{
             $stats = Get-Stat -Entity $VMHosts -Stat $EsxStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue
           }
@@ -650,7 +672,7 @@ Function Get-FluxCompute {
         }
         
         ## Stop transcript logging, if any
-        If ($Logging -eq 'On') {
+        If ($Logging) {
           Write-Verbose -Message 'Stopping transcript logging for this session'
             Stop-Transcript
         }
