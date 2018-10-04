@@ -114,9 +114,16 @@ team to ensure that you find the best option (of the many we offer)
 for credential handling with the Fluxor module.
 
 #### SSPI / Passthrough (`Strict` parameter)
-To use passthrough authentication use the `Strict` parameter. If a credential is not provided, we try using the hard-coded value in the scripts unless the `Strict` switch is activated.
+To use passthrough authentication leave the `Strict` parameter set to $true (the default).
 
-    $iops = Get-FluxIOPS -Server $vc -IgnoreDatastore "*local*" -Strict
+    $iops = Get-FluxIOPS -Server $vc
+
+<br>
+
+#### Using the plain text value in script
+Set Strict to $false to use the plain text value in the script. Dot his for Get and Write functions of Fluxor unless providing a Credential or CredentialPath.
+
+    $stats = Get-FluxCompute -Strict:$false
 
 <br>
 
