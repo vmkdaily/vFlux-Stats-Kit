@@ -200,7 +200,7 @@ Function Get-FluxCompute {
         If($MaxJitter -ge 1){
           [int]$intRandom = (1..$MaxJitter | Get-Random)
           Write-Verbose -Message ('Awaiting jitter offset of {0} seconds' -f $intRandom)
-          Start-Sleep -Seconds (1..$MaxJitter | Get-Random)
+          Start-Sleep -Seconds $intRandom
         }
         
         If($PSVersionTable.PSVersion.Major -eq 3){
