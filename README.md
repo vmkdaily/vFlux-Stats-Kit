@@ -20,36 +20,31 @@ using the `OutputPath` parameter, or return raw vSphere API objects with the
 The Fluxor module gathers very basic stats and is intended for you to extend.
 However, if you just want a ready-made kit, check out the following items.
 
-vSAN - For vSAN done right, see the free sexigraf appliance (deployed as OVA).
-
-<br>
+#### vSAN
+We support basic virtual machine disk performance for vSAN (we return last hour). For greater detail, see the free sexigraf appliance (deployed as OVA or from ISO):
 
 [http://www.sexigraf.fr/](http://www.sexigraf.fr/)
 
 <br>
 
-Telegraf - You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use
-the amazing custom scripts added by influx data community member @prydin. It does more/better than Fluxor
-and uses pure api and proper integers when writing line protocol.
-
-<br>
+#### Telegraf 
+You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use the amazing custom scripts added by influxdata community member @prydin. It does more/better than Fluxor and uses pure api and proper integers when writing line protocol. Check it out at:
 
 [https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md](https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md)
 
 <br>
 
-#### Community dashboards
-This one is a community dashboard using the old version of the vFlux-Stats-Kit.
-<br>
-
-[https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
-
-<br>
-
-This one uses the new Telegraf plugin and some excellent custom charts:
-<br>
+#### Example Telegraf dashboard
+This set of dashboards uses the new Telegraf plugin and some excellent custom charts:
 
 [https://jorgedelacruz.uk/2018/10/01/looking-for-the-perfect-dashboard-influxdb-telegraf-and-grafana-part-xii-native-telegraf-plugin-for-vsphere/](https://jorgedelacruz.uk/2018/10/01/looking-for-the-perfect-dashboard-influxdb-telegraf-and-grafana-part-xii-native-telegraf-plugin-for-vsphere/)
+
+<br>
+
+#### Community dashboards
+This one is a community dashboard using the old version of the vFlux-Stats-Kit. Nothing has changed with our default collection naming (i.e. `cpu.usage.average`) so these should work fine:
+
+[https://github.com/jorgedlcruz/vmware-grafana](https://github.com/jorgedlcruz/vmware-grafana)
 
 <br>
 
@@ -58,10 +53,12 @@ Please open an issue for any creative ideas or feedback (or to share a dashboard
 Of course, if you find an issue or an OS that we cannot handle yet, please do let us know.
 There is no need to follow any official format.
 
-#### Twitter / Blog / Github
+#### Twitter
 Twitter DM is open. Reach us at:
 <br>
 [https://twitter.com/vmkdaily](https://twitter.com/vmkdaily)
+
+#### Blog / Github
 <br>
 [https://vmkdaily.ghost.io/](https://vmkdaily.ghost.io/)
 <br>
