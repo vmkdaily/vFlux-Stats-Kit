@@ -48,7 +48,7 @@ Function Get-FluxSummary {
         Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
 
       .PARAMETER MaxJitter 
-        Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
+        Integer. The maximum time in seconds to offset the start of stat collection. The default is 0. Use this to prevent spikes on localhost when running many jobs.
 
       .PARAMETER Strict
         Boolean. Prevents fall-back to hard-coded script values for login credential if any.
@@ -115,7 +115,7 @@ Function Get-FluxSummary {
       #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
       [switch]$Logging,
     
-      #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
+      #Integer. The maximum time in seconds to offset the start of stat collection. The default is 0. Use this to prevent spikes on localhost when running many jobs.
       [ValidateRange(0,120)]
       [int]$MaxJitter = 0,
       
