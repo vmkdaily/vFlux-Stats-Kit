@@ -28,7 +28,7 @@ We support basic virtual machine disk performance for vSAN (we return last hour)
 <br>
 
 #### Telegraf 
-You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use the amazing custom scripts added by influx data community member @prydin. It does more/better than Fluxor and uses pure api and proper integers when writing line protocol. Check it out at:
+You can feed InfluxDB with Telegraf, an open source package from Influxdata. You can use the amazing custom scripts added by influxdata community member @prydin. It does more/better than Fluxor and uses pure api and proper integers when writing line protocol. Check it out at:
 
 [https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md](https://github.com/influxdata/telegraf/blob/release-1.8/plugins/inputs/vsphere/README.md)
 
