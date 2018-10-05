@@ -227,8 +227,28 @@ Function Get-FluxCompute {
           }
         }
       
+        ## Handle existing connections, if any
+        If($Server){
+          If($Global:DefaultVIServers.Name -contains $Server){
+            Write-Verbose -Message ('Using connection to {0}' -f $Server)
+          }
+          Else{
+            [bool]$needsConnect = $true
+          }
+        }
+        Else{
+          ## Use the DefaultVIServer
+          If($Global:DefaultVIServer.IsConnected){
+            [string]$Server = $Global:DefaultVIServer | Select-Object -ExpandProperty Name
+            Write-Verbose -Message ('Using connection to {0}' -f $Server)
+          }
+          Else{
+            Throw 'Server parameter is required if not connected to a VIServer!'
+          }
+        }
+
         ## Connect to vCenter, if needed
-        If(-Not($Global:DefaultVIServer)){
+        If($needsConnect -eq $true){
           If($Server){
             If(!$Credential -and !$User){
               If($IsCoreCLR){
@@ -243,17 +263,17 @@ Function Get-FluxCompute {
                 }
               }
             }
-          
+            
             ## Consume PSCredential, if we have it
             If($Credential){
-                try {
-                  $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
-                  [bool]$runtimeConnection = $true
-                }
-                Catch {
-                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                  throw
-                }
+              try {
+                $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
+                [bool]$runtimeConnection = $true
+              }
+              Catch {
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                throw
+              }
             }
             Else{
               ## Handle user and Password parameters, if needed.
@@ -281,31 +301,20 @@ Function Get-FluxCompute {
               Else{
                 ## Passthrough / SSPI
                 try {
-                    $null = Connect-VIServer -Server $Server -WarningAction SilentlyContinue -ErrorAction Stop
-                    [bool]$runtimeConnection = $true
+                  $null = Connect-VIServer -Server $Server -WarningAction SilentlyContinue -ErrorAction Stop
+                  [bool]$runtimeConnection = $true
                 }
                 Catch {
-                    Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                    throw
+                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                  throw
                 }
               }
             }
           }
-          Else{
-            Throw 'Server parameter is required if not connected to vCenter!'
-          }
-        }
-        Else{
-            Write-Verbose -Message ('Using connection to {0}' -f $Global:DefaultVIServer)
         }
 
-        ## Confirm connection or throw
-        If(!$Global:DefaultVIServer -or ($Global:DefaultVIServer -and !$Global:DefaultVIServer.IsConnected)){
-            Throw 'vCenter Connection Required!'
-        }
-        Else {
-            Write-Verbose -Message ('Beginning stat collection on {0}' -f ($Global:DefaultVIServer))
-        }
+        ## Announce collection start
+        Write-Verbose -Message ('Beginning stat collection on {0}' -f $Server)
 
         ## Array to hold result objects
         If(-Not($OutputPath)){
@@ -334,7 +343,7 @@ Function Get-FluxCompute {
           ## Enumerate VM list
           If($PSv3){
             try{
-              $VMs = Get-VM -Server $Global:DefaultVIServer -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+              $VMs = Get-VM -Server $Server -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more virtual machines!'
@@ -343,7 +352,7 @@ Function Get-FluxCompute {
           }
           Else{
             try{
-              $VMs = (Get-VM -Server $Global:DefaultVIServer -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+              $VMs = (Get-VM -Server $Server -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more virtual machines!'
@@ -416,7 +425,7 @@ Function Get-FluxCompute {
                 [int]$interval = $vmStat.IntervalSecs
                 [string]$type = 'VM' #derived
                 [string]$unit = $vmStat.Unit
-                [string]$vc = $global:DefaultVIServer | Select-Object -ExpandProperty Name
+                [string]$vc = $Server
               
                 ## Handle value and timestamp
                 $value = $vmStat.Value
@@ -515,7 +524,7 @@ Function Get-FluxCompute {
           ## Enumerate VMHost objects
           If($PSv3){
             try{
-              $VMHosts = Get-VMHost -Server $Global:DefaultVIServer -ErrorAction Stop | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
+              $VMHosts = Get-VMHost -Server $Server -ErrorAction Stop | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more VMHosts!'
@@ -524,7 +533,7 @@ Function Get-FluxCompute {
           }
           Else{
             try{
-              $VMHosts = (Get-VMHost -Server $Global:DefaultVIServer -ErrorAction Stop).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
+              $VMHosts = (Get-VMHost -Server $Server -ErrorAction Stop).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
             }
             catch{
               Write-Warning -Message 'Problem enumerating one or more VMHosts!'
@@ -597,7 +606,7 @@ Function Get-FluxCompute {
                 [int]$interval = $hostStat.IntervalSecs
                 [string]$type = 'VMHost' #derived
                 [string]$unit = $hostStat.Unit
-                [string]$vc = $global:DefaultVIServer | Select-Object -ExpandProperty Name
+                [string]$vc = $global:DefaultVIServer
               
                 ## Handle value and timestamp
                 $value = $hostStat.Value

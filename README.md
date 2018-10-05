@@ -182,19 +182,19 @@ Point to the Fluxor folder to import the module with Import-Module.
 ## Step 9. Get Fluxor Commands
 Use `Get-Command` (or alias `gcm`) to see the available cmdlets.
 
-    PS /home/fluxor> gcm -Module Fluxor | ft -AutoSize
+    PS /home/mike> gcm -Module Fluxor | ft -AutoSize
 
     CommandType Name               Version Source
     ----------- ----               ------- ------
-    Function    Get-FluxCompute    1.0.0.3 Fluxor
-    Function    Get-FluxCrontab    1.0.0.3 Fluxor
-    Function    Get-FluxIOPS       1.0.0.3 Fluxor
-    Function    Get-FluxSummary    1.0.0.3 Fluxor
-    Function    Invoke-FluxCLI     1.0.0.3 Fluxor
-    Function    New-FluxCredential 1.0.0.3 Fluxor
-    Function    Write-FluxCompute  1.0.0.3 Fluxor
-    Function    Write-FluxIOPS     1.0.0.3 Fluxor
-    Function    Write-FluxSummary  1.0.0.3 Fluxor
+    Function    Get-FluxCompute    1.0.0.4 Fluxor
+    Function    Get-FluxCrontab    1.0.0.4 Fluxor
+    Function    Get-FluxIOPS       1.0.0.4 Fluxor
+    Function    Get-FluxSummary    1.0.0.4 Fluxor
+    Function    Invoke-FluxCLI     1.0.0.4 Fluxor
+    Function    New-FluxCredential 1.0.0.4 Fluxor
+    Function    Write-FluxCompute  1.0.0.4 Fluxor
+    Function    Write-FluxIOPS     1.0.0.4 Fluxor
+    Function    Write-FluxSummary  1.0.0.4 Fluxor
 
 
 <br>

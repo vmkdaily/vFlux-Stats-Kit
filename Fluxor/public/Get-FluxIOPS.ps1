@@ -246,8 +246,28 @@ Function Get-FluxIOPS {
         }
       }
       
+      ## Handle existing connections, if any
+      If($Server){
+        If($Global:DefaultVIServers.Name -contains $Server){
+          Write-Verbose -Message ('Using connection to {0}' -f $Server)
+        }
+        Else{
+          [bool]$needsConnect = $true
+        }
+      }
+      Else{
+        ## Use the DefaultVIServer
+        If($Global:DefaultVIServer.IsConnected){
+          [string]$Server = $Global:DefaultVIServer | Select-Object -ExpandProperty Name
+          Write-Verbose -Message ('Using connection to {0}' -f $Server)
+        }
+        Else{
+          Throw 'Server parameter is required if not connected to a VIServer!'
+        }
+      }
+
       ## Connect to vCenter, if needed
-      If(-Not($Global:DefaultVIServer)){
+      If($needsConnect -eq $true){
         If($Server){
           If(!$Credential -and !$User){
             If($IsCoreCLR){
@@ -265,14 +285,14 @@ Function Get-FluxIOPS {
           
           ## Consume PSCredential, if we have it
           If($Credential){
-              try {
-                $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
-                [bool]$runtimeConnection = $true
-              }
-              Catch {
-                Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                throw
-              }
+            try {
+              $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
+              [bool]$runtimeConnection = $true
+            }
+            Catch {
+              Write-Warning -Message ('{0}' -f $_.Exception.Message)
+              throw
+            }
           }
           Else{
             ## Handle user and Password parameters, if needed.
@@ -300,35 +320,24 @@ Function Get-FluxIOPS {
             Else{
               ## Passthrough / SSPI
               try {
-                  $null = Connect-VIServer -Server $Server -WarningAction SilentlyContinue -ErrorAction Stop
-                  [bool]$runtimeConnection = $true
+                $null = Connect-VIServer -Server $Server -WarningAction SilentlyContinue -ErrorAction Stop
+                [bool]$runtimeConnection = $true
               }
               Catch {
-                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                  throw
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                throw
               }
             }
           }
         }
-        Else{
-          Throw 'Server parameter is required if not connected to vCenter!'
-        }
-      }
-      Else{
-          Write-Verbose -Message ('Using connection to {0}' -f $Global:DefaultVIServer)
       }
 
-      ## Confirm connection or throw
-      If(!$Global:DefaultVIServer -or ($Global:DefaultVIServer -and !$Global:DefaultVIServer.IsConnected)){
-        Throw 'vCenter Connection Required!'
-      }
-      Else {
-          Write-Verbose -Message ('Beginning stat collection on {0}' -f ($Global:DefaultVIServer))
-      }
-
+      ## Announce collection start
+      Write-Verbose -Message ('Beginning stat collection on {0}' -f $Server)
+      
       ## Datastore Enumeration
       try{
-        $dsList = Get-Datastore -Server $global:DefaultVIServer -ErrorAction Stop
+        $dsList = Get-Datastore -Server $Server -ErrorAction Stop
       }
       catch{
         throw
@@ -375,10 +384,10 @@ Function Get-FluxIOPS {
       ## Get VMFS virtual machines
       If($dsVMFS){
         If($PSv3){
-          $BlockVMs = Get-VM -Datastore $dsVMFS -Server $Global:DefaultVIServer | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+          $BlockVMs = Get-VM -Datastore $dsVMFS -Server $Server | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
         }
         Else{
-          $BlockVMs = (Get-VM -Datastore $dsVMFS -Server $Global:DefaultVIServer).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+          $BlockVMs = (Get-VM -Datastore $dsVMFS -Server $Server).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
         }
       }
       Else{
@@ -388,10 +397,10 @@ Function Get-FluxIOPS {
       ## Get NFS virtual machines
       If($dsNFS){
         If($PSv3){
-          $NfsVMs = Get-VM -Datastore $dsNFS -Server $Global:DefaultVIServer | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+          $NfsVMs = Get-VM -Datastore $dsNFS -Server $Server | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
         }
         Else{
-          $NfsVMs = (Get-VM -Datastore $dsNFS -Server $Global:DefaultVIServer).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+          $NfsVMs = (Get-VM -Datastore $dsNFS -Server $Server).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
         }
       }
       Else{
@@ -401,10 +410,10 @@ Function Get-FluxIOPS {
       ## Get vSAN virtual machines
       If($dsvSAN){
         If($PSv3){
-          $vsanVMs = Get-VM -Datastore $dsvSAN -Server $Global:DefaultVIServer | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
+          $vsanVMs = Get-VM -Datastore $dsvSAN -Server $Server | Where-Object { $_.PowerState -eq 'PoweredOn' } | Sort-Object -Property $_.VMHost
         }
         Else{
-          $vsanVMs = (Get-VM -Datastore $dsvSAN -Server $Global:DefaultVIServer).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
+          $vsanVMs = (Get-VM -Datastore $dsvSAN -Server $Server).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property $_.VMHost
         }
       }
       Else{
@@ -523,7 +532,7 @@ Function Get-FluxIOPS {
               [int]$interval = $stat.IntervalSecs
               [string]$type = 'VM'
               [string]$unit = $stat.Unit
-              [string]$vc = $Global:DefaultVIServer | Select-Object -ExpandProperty Name
+              [string]$vc = $Server
               
               ## Handle value and timestamp
               $value = $stat.Value
@@ -675,7 +684,7 @@ Function Get-FluxIOPS {
               [int]$interval = $stat.IntervalSecs
               [string]$type = 'VM' #derived
               [string]$unit = $stat.Unit
-              [string]$vc = $Global:DefaultVIServer | Select-Object -ExpandProperty Name
+              [string]$vc = $Server
               
               ## Handle value and timestamp
               $value = $stat.Value
@@ -802,7 +811,7 @@ Function Get-FluxIOPS {
                 [int]$interval = 20 #derived. Unlike other intervals, this one is derived, meaning we made it up. Do not change this unless you also change the StartTime parameter of Get-VsanStat.
                 [string]$type = 'VM' #derived
                 [string]$unit = $stat.Unit
-                [string]$vc = $Global:DefaultVIServer| Select-Object -ExpandProperty Name
+                [string]$vc = $Server
                 
                 ## Handle value and timestamp
                 $value = $stat.Value

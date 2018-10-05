@@ -12,7 +12,7 @@
 RootModule = 'Fluxor.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0.3'
+ModuleVersion = '1.0.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = 'vmkdaily'
 Copyright = '(c) 2015-2018 vmkdaily. MIT.'
 
 # Description of the functionality provided by this module
-Description = 'Gathers performance stats from VMware vSphere and writes them to InfluxDB. Supports PowerShell Core 6.x on Windows, Linux and macOS. Also backwards compatible with classic PowerShell 3.0 to 5.1.'
+Description = 'Gathers performance stats from VMware vSphere and writes them to InfluxDB. Supports PowerShell Core 6.x on Windows, Linux and macOS. Backwards compatible with classic PowerShell 3.0 to 5.1.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '3.0'
@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        # ReleaseNotes = 'https://github.com/vmkdaily/vFlux-Stats-Kit/blob/master/Fluxor/doc/CHANGELOG.ps1'
 
     } # End of PSData hashtable
 

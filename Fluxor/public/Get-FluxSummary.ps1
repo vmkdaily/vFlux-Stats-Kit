@@ -199,8 +199,28 @@ Function Get-FluxSummary {
           }
         }
       
+        ## Handle existing connections, if any
+        If($Server){
+          If($Global:DefaultVIServers.Name -contains $Server){
+            Write-Verbose -Message ('Using connection to {0}' -f $Server)
+          }
+          Else{
+            [bool]$needsConnect = $true
+          }
+        }
+        Else{
+          ## Use the DefaultVIServer
+          If($Global:DefaultVIServer.IsConnected){
+            [string]$Server = $Global:DefaultVIServer | Select-Object -ExpandProperty Name
+            Write-Verbose -Message ('Using connection to {0}' -f $Server)
+          }
+          Else{
+            Throw 'Server parameter is required if not connected to a VIServer!'
+          }
+        }
+
         ## Connect to vCenter, if needed
-        If(-Not($Global:DefaultVIServer)){
+        If($needsConnect -eq $true){
           If($Server){
             If(!$Credential -and !$User){
               If($IsCoreCLR){
@@ -215,17 +235,17 @@ Function Get-FluxSummary {
                 }
               }
             }
-          
+    
             ## Consume PSCredential, if we have it
             If($Credential){
-                try {
-                  $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
-                  [bool]$runtimeConnection = $true
-                }
-                Catch {
-                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                  throw
-                }
+              try {
+                $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
+                [bool]$runtimeConnection = $true
+              }
+              Catch {
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                throw
+              }
             }
             Else{
               ## Handle user and Password parameters, if needed.
@@ -253,31 +273,20 @@ Function Get-FluxSummary {
               Else{
                 ## Passthrough / SSPI
                 try {
-                    $null = Connect-VIServer -Server $Server -WarningAction SilentlyContinue -ErrorAction Stop
-                    [bool]$runtimeConnection = $true
+                  $null = Connect-VIServer -Server $Server -WarningAction SilentlyContinue -ErrorAction Stop
+                  [bool]$runtimeConnection = $true
                 }
                 Catch {
-                    Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                    throw
+                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                  throw
                 }
               }
             }
           }
-          Else{
-            Throw 'Server parameter is required if not connected to vCenter!'
-          }
-        }
-        Else{
-            Write-Verbose -Message ('Using connection to {0}' -f $Global:DefaultVIServer)
         }
 
-        ## Confirm connection or throw
-        If(!$Global:DefaultVIServer -or ($Global:DefaultVIServer -and !$Global:DefaultVIServer.IsConnected)){
-            Throw 'vCenter Connection Required!'
-        }
-        Else {
-            Write-Verbose -Message ('Beginning summary collection on {0}' -f ($Global:DefaultVIServer))
-        }
+        ## Announce collection start
+        Write-Verbose -Message ('Beginning summary collection on {0}' -f $Server)
 
       ## Array to hold result objects
       If(-Not($OutputPath)){
@@ -306,7 +315,7 @@ Function Get-FluxSummary {
         ## Enumerate VM list
         If($PSv3){
           try{
-            $VMs = Get-VM -Server $Global:DefaultVIServer -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+            $VMs = Get-VM -Server $Server -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
           }
           catch{
             Write-Warning -Message 'Problem enumerating one or more virtual machines!'
@@ -315,7 +324,7 @@ Function Get-FluxSummary {
         }
         Else{
           try{
-            $VMs = (Get-VM -Server $Global:DefaultVIServer -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+            $VMs = (Get-VM -Server $Server -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
           }
           catch{
             Write-Warning -Message 'Problem enumerating one or more virtual machines!'
@@ -365,7 +374,7 @@ Function Get-FluxSummary {
               [int]$memorygb = $vm | Select-Object -ExpandProperty MemoryGB
               [string]$numcpu = $vm | Select-Object -ExpandProperty NumCPU
               [string]$type = 'VM' #derived
-              [string]$vc = $global:DefaultVIServer | Select-Object -ExpandProperty Name
+              [string]$vc = $Server
             
               ## Handle value and timestamp
               [string]$value = $vm.ExtensionData.OverallStatus
@@ -428,10 +437,10 @@ Function Get-FluxSummary {
       If($ReportType -eq 'VMHost'){
       
         If($PSv3){
-          $VMHosts = Get-VMHost -Server $Global:DefaultVIServer | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
+          $VMHosts = Get-VMHost -Server $Server | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
         }
         Else{
-          $VMHosts = (Get-VMHost -Server $Global:DefaultVIServer).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
+          $VMHosts = (Get-VMHost -Server $Server).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
         }
       
         ## Handle PassThru Mode
@@ -475,7 +484,7 @@ Function Get-FluxSummary {
               [int]$memorygb = $esx | Select-Object -ExpandProperty MemoryTotalGB
               [string]$numcpu = $esx | Select-Object -ExpandProperty NumCPU
               [string]$type = 'VMHost' #derived
-              [string]$vc = $global:DefaultVIServer | Select-Object -ExpandProperty Name
+              [string]$vc = $Server
             
               ## Handle value and timestamp
               [string]$value = $esx.ExtensionData.OverallStatus
