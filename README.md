@@ -183,15 +183,15 @@ Use `Get-Command` (or alias `gcm`) to see the available cmdlets.
 
     CommandType Name               Version Source
     ----------- ----               ------- ------
-    Function    Get-FluxCompute    1.0.0.4 Fluxor
-    Function    Get-FluxCrontab    1.0.0.4 Fluxor
-    Function    Get-FluxIOPS       1.0.0.4 Fluxor
-    Function    Get-FluxSummary    1.0.0.4 Fluxor
-    Function    Invoke-FluxCLI     1.0.0.4 Fluxor
-    Function    New-FluxCredential 1.0.0.4 Fluxor
-    Function    Write-FluxCompute  1.0.0.4 Fluxor
-    Function    Write-FluxIOPS     1.0.0.4 Fluxor
-    Function    Write-FluxSummary  1.0.0.4 Fluxor
+    Function    Get-FluxCompute    1.0.0.5 Fluxor
+    Function    Get-FluxCrontab    1.0.0.5 Fluxor
+    Function    Get-FluxIOPS       1.0.0.5 Fluxor
+    Function    Get-FluxSummary    1.0.0.5 Fluxor
+    Function    Invoke-FluxCLI     1.0.0.5 Fluxor
+    Function    New-FluxCredential 1.0.0.5 Fluxor
+    Function    Write-FluxCompute  1.0.0.5 Fluxor
+    Function    Write-FluxIOPS     1.0.0.5 Fluxor
+    Function    Write-FluxSummary  1.0.0.5 Fluxor
 
 
 <br>

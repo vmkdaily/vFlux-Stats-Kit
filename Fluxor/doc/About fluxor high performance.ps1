@@ -13,24 +13,6 @@ And then write by populating the InputObject parameter of the write cmdlet (i.e.
 - Add data drives where appropriate. This delivers additional SCSI queues for better throughput to InfluxDB (or high performance writes to local disk for text files if needed).
 - Use VMware vmxnet3 NIC
 
-## Cardinality
-Only a concern at high performance levels, but should be considered in your design.
-To increase cardinality, one simple way is to write into more databases (i.e. one per cluster, etc.).
-This is something you have easy control of by using influxcli to create a database, and then when
-writing with Fluxor modules, pointing to the database. By, default we expect compute, iops,
-and summary databases. You could create compute-cluster1, etc. Be sure to test and see that you are getting
-data points, since the cmdlet defaults to a certain database for each cmdlet used, if not specified.
-For example, Write-FluxCompute will attempt to write to a database named compute, unless you populate
-the Database parameter.
-
-By default, each metric type (i.e. 'cpu.usage.average') is an entry into InfluxDB, and then
-all hosts add into that. This is a Cardinality of Standard. To increase performance we can
-simply increase the number of buckets we write (or read) from. So instead of an entry per
-metric, you can have an entry per-host-per-metric, such as 'host7-cpu.usage.average'.
-
-Generally, do not mess with Cardinality as it can have an impact on InfluxDB performance.
-for those that know that need the functionality, it is there. 
-
 ## Default cmdlet output
 By default, the output for Fluxor is object based and returns an array of text lines crafted as
 line protocol (the InfluxDB-specific technique for writing to their API). With the default there is no need to batch,

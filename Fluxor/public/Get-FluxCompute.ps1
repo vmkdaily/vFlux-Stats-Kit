@@ -46,14 +46,20 @@ Function Get-FluxCompute {
       .PARAMETER IgnoreCertificateErrors
         Switch. Alias Ice. This parameter should not be needed in most cases. Activate to ignore invalid certificate errors when connecting to vCenter Server. This switch adds handling for the current PowerCLI Session Scope to allow invalid certificates (all client operating systems) and for Windows PowerShell versions 3.0 through 5.1. We also add a temporary runtime dotnet type to help the current session ignore invalid certificates. If you find that you are still having issues, consider downloading the certificate from your vCenter Server instead.
     
-      .PARAMETER Cardinality
-        String. Changing this is not recommended for most cases. Optionally, increase the Cardinality of data points collected. Tab complete through options Standard, Advanced or Overkill. The default is Standard.
-
       .PARAMETER Logging
         Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
 
       .PARAMETER MaxJitter 
-        Integer. The maximum time in seconds to offset the start of stat collection. The default is 0. Use this to prevent spikes on localhost when running many jobs.
+        Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
+      
+      .PARAMETER Supress
+        Switch. Optionally, activate the Supress switch to prevent Fluxor jobs from running up to the maximium of MaxSupressionWindow.
+      
+      .PARAMETER Resume
+        Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
+      
+      .PARAMETER MaxSupressionWindow
+        Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
 
       .PARAMETER Strict
         Boolean. Prevents fall-back to hard-coded script values for login credential if any.
@@ -132,16 +138,21 @@ Function Get-FluxCompute {
       [Alias('Ice')]
       [switch]$IgnoreCertificateErrors,
 
-      #String. Optionally, increase the Cardinality of data points collected. The default is Standard and changing this is not recommended in most cases.
-      [ValidateSet('Standard','Advanced','OverKill')]
-      [string]$Cardinality = 'Standard',
-      
       #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
       [switch]$Logging,
       
-      #Integer. The maximum time in seconds to offset the start of stat collection. The default is 0. Use this to prevent spikes on localhost when running many jobs.
+      #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
       [ValidateRange(0,120)]
       [int]$MaxJitter = 0,
+      
+      #Switch. Optionally, activate the Supress switch to prevent Fluxor jobs from running up to the maximium of MaxSupressionWindow.
+      [switch]$Supress,
+      
+      #Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
+      [switch]$Resume,
+      
+      #Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
+      [int]$MaxSupressionWindow = 20,
       
       #Boolean. Prevents fall-back to hard-coded script values for login credential if any.
       [bool]$Strict = $true
@@ -152,36 +163,26 @@ Function Get-FluxCompute {
         ## Announce cmdlet start
         Write-Verbose -Message ('Starting {0} at {1}' -f ($MyInvocation.Mycommand), (Get-Date -Format o))
 
-        ## Supress collection, if needed.
-        $supressFile = ('{0}/supress-flux.txt' -f $HOME)
-        [bool]$exists = Test-Path -Path $supressFile -PathType Leaf
-        If($exists){
-          $item = Get-Item -Path $supressFile | Select-Object -First 1
-          $itemAgeMinutes = [int]((Get-Date)-(Get-Date  -Date $item.LastWriteTime) | Select-Object -ExpandProperty Minutes)
-          If($itemAgeMinutes -lt 60){
-              Write-Verbose -Message 'Fluxor running in supress mode; No stats will be collected!'
-              exit
-          }
+        ## Handle PowerShell transcript Logging
+        If($Logging){
+          [string]$LogDir            = $HOME                                           #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
+          [string]$LogName           = 'flux-compute-ps-transcript'                    #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
+          [string]$dt                = (Get-Date -Format 'ddMMMyyyy') | Out-String     #Creates one log file per day by default.
         }
-
-        ## Logging (only used if Logging switch is activated)
-        [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
-        [string]$LogName             = 'flux-compute-ps-transcript'                  #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
-        [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day by default.
         
         ## Output file name leaf (only used when OutputPath is populated)
-        [string]$statLeaf            = 'fluxstat'                                    #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
+        [string]$statLeaf            = 'fluxstat'                                      #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
         
         ## Handle spaces in virtual machine names
-        [string]$DisplayNameSpacer   = '\ '                                          #We perform a replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
+        [string]$DisplayNameSpacer   = '\ '                                            #We perform a replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
         
         ## Handle Credential from disk by hard-coded path
-        [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+        [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                      #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
     
         ## Handle plain text credential
         If($Strict -eq $false){
-          [string]$vcUser              = 'flux-read-only@vsphere.local'              #This value is ignored by default unless the Strict parameter is set to $false.
-          [string]$vcPass              = 'VMware123!!'                               #This value is ignored by default unless the Strict parameter is set to $false.
+          [string]$vcUser            = 'flux-read-only@vsphere.local'                  #This value is ignored by default unless the Strict parameter is set to $false.
+          [string]$vcPass            = 'VMware123!!'                                   #This value is ignored by default unless the Strict parameter is set to $false.
         }
       
         ## stat preferences
@@ -196,6 +197,41 @@ Function Get-FluxCompute {
 
     Process {
     
+        ## Handle name of supress file
+        $supressFile = ('{0}/supress-flux.txt' -f $HOME)
+        
+        ## Handle Supress parameter
+        If($Supress){
+          $null = New-Item -ItemType File -Path $supressFile -Confirm:$false -Force
+          return
+        }
+        
+        If($Resume){
+          $null = Remove-Item -Path $supressFile -Confirm:$false -Force
+          return
+        }
+        
+        ## Supress collection, if needed.
+        [bool]$exists = Test-Path -Path $supressFile -PathType Leaf
+        If($exists){
+          $item = Get-Item -Path $supressFile | Select-Object -First 1
+          $itemAgeMinutes = [int]((Get-Date)-(Get-Date  -Date $item.LastWriteTime) | Select-Object -ExpandProperty Minutes)
+          If($itemAgeMinutes -lt $MaxSupressionWindow){
+              Write-Verbose -Message 'Fluxor running in supress mode; No stats will be collected!'
+              return
+          }
+          Else{
+            Write-Verbose -Message ('Cleaning up old supress file at {0}' -f $supressFile)
+            try{
+              $null = Remove-Item -Path $supressFile -Confirm:$false -Force -ErrorAction Stop
+            }
+            catch{
+              Write-Warning -Message ('Problem removing supress file at {0}!' -f $supressFile)
+              Throw ('{0}' -f $_.Exception.Message)
+            }
+          }
+        }
+        
         ## Handle jitter
         If($MaxJitter -ge 1){
           [int]$intRandom = (1..$MaxJitter | Get-Random)
@@ -399,28 +435,9 @@ Function Get-FluxCompute {
                 ## Handle instance
                 [string]$instance = $vmStat.Instance
 
-                ## Handle measurement name
-                switch($Cardinality){
-                  Advanced{
-                    ## Cardinality of Advanced includes metric id and host (i.e. 'cpu.usage.average.testvm001')
-                    [string]$measurement = ('{0}.{1}' -f $vmStat.MetricId, $name)
-                  }
-                  OverKill{
-                    If($instance){
-                      ## Cardinality of OverKill includes the metric id, host and instance (i.e. 'cpu.usage.average.testvm001.15')
-                      [string]$measurement = ('{0}.{1}.{2}' -f $vmStat.MetricId, $name, $instance)
-                    }
-                    Else{
-                      ## Fall-back to Cardinality of Advanced, if there is no instance
-                      [string]$measurement = ('{0}.{1}' -f $vmStat.MetricId, $name)
-                    }
-                  }
-                  Default{
-                    ## Cardinality of Standard (default) returns metric id only (i.e. 'cpu.usage.average')
-                    [string]$measurement = $vmStat.MetricId
-                  }
-                }
-              
+                ## Handle measurement name (i.e. 'cpu.usage.average')
+                [string]$measurement = $vmStat.MetricId
+               
                 ## Handle general info
                 [int]$interval = $vmStat.IntervalSecs
                 [string]$type = 'VM' #derived
@@ -580,27 +597,8 @@ Function Get-FluxCompute {
                 ## Handle instance
                 [string]$instance = $hostStat.Instance
 
-                ## Handle measurement name
-                switch($Cardinality){
-                  Advanced{
-                    ## Cardinality of Advanced includes metric id and host (i.e. 'cpu.usage.average.host7')
-                    [string]$measurement = ('{0}.{1}' -f $hostStat.MetricId, $name)
-                  }
-                  OverKill{
-                    If($instance){
-                      ## Cardinality of OverKill includes the metric id, host and instance (i.e. returns 'cpu.usage.average.host7.15' for cpu 16 on host7)
-                      [string]$measurement = ('{0}.{1}.{2}' -f $hostStat.MetricId, $name, $instance)
-                    }
-                    Else{
-                      ## Fall-back to Cardinality of Advanced, if there is no instance
-                      [string]$measurement = ('{0}.{1}' -f $hostStat.MetricId, $name)
-                    }
-                  }
-                  Default{
-                    ## Cardinality of Standard (default) returns metric id only (i.e. 'cpu.usage.average')
-                    [string]$measurement = $hostStat.MetricId
-                  }
-                }
+                ## Handle measurement name (i.e. 'cpu.usage.average')
+                [string]$measurement = $hostStat.MetricId
 
                 ## Handle general info
                 [int]$interval = $hostStat.IntervalSecs

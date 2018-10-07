@@ -52,8 +52,11 @@
     -  Changed the Strict parameter to a boolean (previously Switch) and made it $true by default. This allows SSPI (passthrough authentication) to work as expected when a login credential is not provided. To use the plain text credential contained in the script set Strict to $false.
     -  Added MaxJitter parameter to the Get functions. MaxJitter is the maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter.
     -  Added handling for users of multiple mode of PowerCLI to ensure only $global:DefaultVIServer results are returned (issue #11 "2 VMs in one post request")
-  version 1.0.0.4 - 04Oct2018  (latest!)
+  version 1.0.0.4 - 04Oct2018
     -  Added better handling for existing vCenter connections and multiple mode users.
     -  Updated help and examples
-    
-#>
+  version 1.0.0.5 - 06Oct2018  (latest!)
+    -  Removed the Cardinality parameter which was not used by default.
+    -  Added the ability to supress and resume collection with the Supress and Resume parameters. The Fluxor Get-* functions will honor a supress request by creating a lock file; Once the lockfile reaches the default age of 20 minutes (MaxSupressionWindow) we remove it and continue collecting. See the cmdlet help for more detail on these new parameters.
+  
+  #>
