@@ -55,8 +55,11 @@
   version 1.0.0.4 - 04Oct2018
     -  Added better handling for existing vCenter connections and multiple mode users.
     -  Updated help and examples
-  version 1.0.0.5 - 06Oct2018  (latest!)
+  version 1.0.0.5 - 06Oct2018
     -  Removed the Cardinality parameter which was not used by default.
     -  Added the ability to supress and resume collection with the Supress and Resume parameters. The Fluxor Get-* functions will honor a supress request by creating a lock file; Once the lockfile reaches the default age of 20 minutes (MaxSupressionWindow) we remove it and continue collecting. See the cmdlet help for more detail on these new parameters.
-  
+  version 1.0.0.6 - 08Oct2018 (latest!)
+    -  Added parameter sets to handle Supress, and Resume functionality on the Get functions (Get-FluxCompute, Get-FluxIOPS, and Get-FluxSummary).
+
   #>
+  

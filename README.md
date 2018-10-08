@@ -56,13 +56,18 @@ There is no need to follow any official format.
 #### Twitter
 Twitter DM is open. Reach us at:
 <br>
+
 [https://twitter.com/vmkdaily](https://twitter.com/vmkdaily)
 
 #### Blog / Github
 <br>
+
 [https://vmkdaily.ghost.io/](https://vmkdaily.ghost.io/)
+
 <br>
+
 [https://github.com/vmkdaily](https://github.com/vmkdaily)
+
 <br>
 
 #### OS Requirements
@@ -183,15 +188,15 @@ Use `Get-Command` (or alias `gcm`) to see the available cmdlets.
 
     CommandType Name               Version Source
     ----------- ----               ------- ------
-    Function    Get-FluxCompute    1.0.0.5 Fluxor
-    Function    Get-FluxCrontab    1.0.0.5 Fluxor
-    Function    Get-FluxIOPS       1.0.0.5 Fluxor
-    Function    Get-FluxSummary    1.0.0.5 Fluxor
-    Function    Invoke-FluxCLI     1.0.0.5 Fluxor
-    Function    New-FluxCredential 1.0.0.5 Fluxor
-    Function    Write-FluxCompute  1.0.0.5 Fluxor
-    Function    Write-FluxIOPS     1.0.0.5 Fluxor
-    Function    Write-FluxSummary  1.0.0.5 Fluxor
+    Function    Get-FluxCompute    1.0.0.6 Fluxor
+    Function    Get-FluxCrontab    1.0.0.6 Fluxor
+    Function    Get-FluxIOPS       1.0.0.6 Fluxor
+    Function    Get-FluxSummary    1.0.0.6 Fluxor
+    Function    Invoke-FluxCLI     1.0.0.6 Fluxor
+    Function    New-FluxCredential 1.0.0.6 Fluxor
+    Function    Write-FluxCompute  1.0.0.6 Fluxor
+    Function    Write-FluxIOPS     1.0.0.6 Fluxor
+    Function    Write-FluxSummary  1.0.0.6 Fluxor
 
 
 <br>

@@ -79,58 +79,75 @@ Function Get-FluxSummary {
 
   #>
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='Default')]
     param (
     
       #String. The IP Address or DNS name of exactly one vCenter Server machine.
+      [Parameter(ParameterSetName='Default', Position=0)]
       [string]$Server,
 
       #PSCredential. Optionally, provide a PSCredential containing the login for vCenter Server.
+      [Parameter(ParameterSetName='Default', ValueFromPipeline=$true)]
+      [ValidateNotNullOrEmpty()]
       [PSCredential]$Credential,
     
-      #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml'). This parameter is not supported on Core Editions of PowerShell.
+      #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml"). This parameter is not supported on Core Editions of PowerShell.
+      [Parameter(ParameterSetName='Default')]
       [ValidateScript({Test-Path $_ -Type File})]
       [string]$CredentialPath,
 
       #String. Optionally, enter a user for connecting to vCenter Server. This is exclusive of the PSCredential options.
+      [Parameter(ParameterSetName='Default', ValueFromPipeline=$true)]
+      [Alias('Username')]
       [string]$User,
 
       #String. Optionally, enter a password for connecting to vCenter Server. This is exclusive of the PSCredential options.
+      [Parameter(ParameterSetName='Default')]
       [string]$Password,
     
       #Switch. Optionally, select the report type to return. The default is virtual machine ('VM').
+      [Parameter(ParameterSetName='Default')]
       [ValidateSet('VM','VMHost')]
       [Alias('Type')]
       [string]$ReportType = 'VM',
 
       #String. Optionally, provide the path to save the outputted results such as $HOME or "$HOME/myfluxLP"
+      [Parameter(ParameterSetName='Default')]
       [ValidateScript({Test-Path $_ -Type Container})]
       [string]$OutputPath,
 
       #Switch. Optionally, return native vSphere stat objects instead of line protocol.
+      [Parameter(ParameterSetName='Default')]
       [switch]$PassThru,
 
       #Switch. Optionally, ignore certificate errors when gathering stats from vCenter Server. Should not be needed in most cases.
+      [Parameter(ParameterSetName='Default')]
       [Alias('Ice')]
       [switch]$IgnoreCertificateErrors,
 
       #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
+      [Parameter(ParameterSetName='Default')]
       [switch]$Logging,
     
       #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
+      [Parameter(ParameterSetName='Default')]
       [ValidateRange(0,120)]
       [int]$MaxJitter = 0,
       
       #Switch. Optionally, activate the Supress switch to prevent Fluxor jobs from running up to the maximium of MaxSupressionWindow.
+      [Parameter(ParameterSetName='Supress Set')]
       [switch]$Supress,
       
       #Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
+      [Parameter(ParameterSetName='Resume Set')]
       [switch]$Resume,
       
       #Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
+      [Parameter(ParameterSetName='Default')]
       [int]$MaxSupressionWindow = 20,
       
       #Boolean. Prevents fall-back to hard-coded script values for login credential if any.
+      [Parameter(ParameterSetName='Default')]
       [bool]$Strict = $true
 
     )
@@ -171,16 +188,29 @@ Function Get-FluxSummary {
 
       ## Handle name of supress file
       $supressFile = ('{0}/supress-flux.txt' -f $HOME)
-        
+      
       ## Handle Supress parameter
       If($Supress){
-        $null = New-Item -ItemType File -Path $supressFile -Confirm:$false -Force
-        return
+        try{
+          $null = New-Item -ItemType File -Path $supressFile -Confirm:$false -Force -ErrorAction Stop
+          return
+        }
+        catch{
+          Write-Warning -Message 'Problem supressing Fluxor!'
+          throw ('{0}' -f $_.Exception.Message)
+        }
       }
         
       If($Resume){
-        $null = Remove-Item -Path $supressFile -Confirm:$false -Force
-        return
+        try{
+          $null = Remove-Item -Path $supressFile -Confirm:$false -Force -ErrorAction Stop
+          Write-Verbose -Message 'Resume operation succeeded'
+          return
+        }
+        catch{
+          Write-Warning -Message 'Problem resuming Fluxor!'
+          throw ('{0}' -f $_.Exception.Message)
+        }
       }
         
       ## Supress collection, if needed.
