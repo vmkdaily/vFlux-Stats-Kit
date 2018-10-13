@@ -336,6 +336,17 @@ Function Get-FluxSummary {
                 throw
               }
             }
+            Elseif($User -and !$Password -and !$IsCoreCLR){
+              try {
+                ## VI Credential store
+                $null = Connect-VIServer -Server $Server -User $User -WarningAction SilentlyContinue -ErrorAction Stop
+                [bool]$runtimeConnection = $true
+              }
+              Catch {
+                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                throw
+              }
+            }
             Else{
               ## Passthrough / SSPI
               try {

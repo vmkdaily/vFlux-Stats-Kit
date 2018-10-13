@@ -365,7 +365,7 @@ Function Get-FluxCompute {
                   throw
                 }
               }
-              Elseif($User -and !$Password){
+              Elseif($User -and !$Password -and !$IsCoreCLR){
                 try {
                   ## VI Credential store
                   $null = Connect-VIServer -Server $Server -User $User -WarningAction SilentlyContinue -ErrorAction Stop
@@ -468,10 +468,10 @@ Function Get-FluxCompute {
 
                 ## Handle name
                 If($PSv3){
-                  [string]$name = ($VMs | Where-Object {$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                  [string]$name = ($VMs | Where-Object {$_.Id -eq $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
                 }
                 Else{
-                  [string]$name = ($VMs.Where{$_.Id -match $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                  [string]$name = ($VMs.Where{$_.Id -eq $vmstat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
                 }
               
                 ## Handle instance
@@ -630,10 +630,10 @@ Function Get-FluxCompute {
               
                 ## Handle name
                 If($PSv3){
-                    [string]$name = $VMHosts | Where-Object {$_.Id -match $hostStat.EntityId} | Select-Object -ExpandProperty Name
+                    [string]$name = $VMHosts | Where-Object {$_.Id -eq $hostStat.EntityId} | Select-Object -ExpandProperty Name
                 }
                 Else{
-                  [string]$name = ($VMHosts).Where{$_.Id -match $hostStat.EntityId} | Select-Object -ExpandProperty Name
+                  [string]$name = ($VMHosts).Where{$_.Id -eq $hostStat.EntityId} | Select-Object -ExpandProperty Name
                 }
 
                 ## Handle instance

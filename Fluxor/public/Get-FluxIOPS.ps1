@@ -386,7 +386,7 @@ Function Get-FluxIOPS {
                 throw
               }
             }
-            Elseif($User -and !$Password){
+            Elseif($User -and !$Password -and !$IsCoreCLR){
               try {
                 ## VI Credential store
                 $null = Connect-VIServer -Server $Server -User $User -WarningAction SilentlyContinue -ErrorAction Stop
@@ -576,10 +576,10 @@ Function Get-FluxIOPS {
           
               ## Handle name
               If($PSv3){
-                [string]$name = ($BlockVMs | Where-Object {$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                [string]$name = ($BlockVMs | Where-Object {$_.Id -eq $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
               }
               Else{
-                [string]$name = ($BlockVMs.Where{$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                [string]$name = ($BlockVMs.Where{$_.Id -eq $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
               }
 
               ## Handle instance. There may or may not be an instance for VMFS block stats.
@@ -708,10 +708,10 @@ Function Get-FluxIOPS {
             
               ## Handle name
               If($PSv3){
-                [string]$name = ($NfsVMs | Where-Object {$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                [string]$name = ($NfsVMs | Where-Object {$_.Id -eq $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
               }
               Else{
-                [string]$name = ($NfsVMs.Where{$_.Id -match $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+                [string]$name = ($NfsVMs.Where{$_.Id -eq $stat.EntityId} | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
               }
 
               ## Handle Instance. This always exists for NFS.
