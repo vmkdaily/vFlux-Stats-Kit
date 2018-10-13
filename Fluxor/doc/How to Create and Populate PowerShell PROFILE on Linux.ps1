@@ -41,7 +41,7 @@ Perform a Get-Module and you should now see Fluxor:
 
   ModuleType Version    Name
   ---------- -------    ----
-  Script     1.0.0.5    Fluxor
+  Script     1.0.0.7    Fluxor
 
 ## List Fluxor cmdlets
 
@@ -49,15 +49,15 @@ Perform a Get-Module and you should now see Fluxor:
 
 CommandType     Name                                               Version    Source
 -----------     ----                                               -------    ------
-Function        Get-FluxCompute                                    1.0.0.5    Fluxor
-Function        Get-FluxCrontab                                    1.0.0.5    Fluxor
-Function        Get-FluxIOPS                                       1.0.0.5    Fluxor
-Function        Get-FluxSummary                                    1.0.0.5    Fluxor
-Function        Invoke-FluxCLI                                     1.0.0.5    Fluxor
-Function        New-FluxCredential                                 1.0.0.5    Fluxor
-Function        Write-FluxCompute                                  1.0.0.5    Fluxor
-Function        Write-FluxIOPS                                     1.0.0.5    Fluxor
-Function        Write-FluxSummary                                  1.0.0.5    Fluxor
+Function        Get-FluxCompute                                    1.0.0.7    Fluxor
+Function        Get-FluxCrontab                                    1.0.0.7    Fluxor
+Function        Get-FluxIOPS                                       1.0.0.7    Fluxor
+Function        Get-FluxSummary                                    1.0.0.7    Fluxor
+Function        Invoke-FluxCLI                                     1.0.0.7    Fluxor
+Function        New-FluxCredential                                 1.0.0.7    Fluxor
+Function        Write-FluxCompute                                  1.0.0.7    Fluxor
+Function        Write-FluxIOPS                                     1.0.0.7    Fluxor
+Function        Write-FluxSummary                                  1.0.0.7    Fluxor
 
 ## Private Functions
 There are currently two 'private' functions that we do not pubish (only to keep it simple).
