@@ -1,4 +1,4 @@
-﻿#requires -Module VMware.Vimautomation.Core
+﻿#requires -Modules VMware.Vimautomation.Core
 Function Get-FluxSummary {
 
   <#
@@ -8,10 +8,11 @@ Function Get-FluxSummary {
 
       .NOTES
         Script:     Get-FluxSummary.ps1
+        Module:     This function is part of the Fluxor module
         Author:     Mike Nisk
-        Prior Art:  Based on vFlux Stats Kit
+        Website:    Check out our contributors, issues, and docs for the vFlux-Stats-Kit at https://github.com/vmkdaily/vFlux-Stats-Kit/
         Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
-        Supports:   PowerCLI 6.5.4 or later (10.x preferred)
+        Supports:   PowerCLI 6.5.4 or later (11.x or later preferred)
         Supports:   Windows, Linux, macOS
 
       .PARAMETER Server
@@ -44,6 +45,9 @@ Function Get-FluxSummary {
       .PARAMETER Logging
         Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
 
+      .PARAMETER LogFolder
+        String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+
       .PARAMETER MaxJitter 
         Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
 
@@ -53,6 +57,9 @@ Function Get-FluxSummary {
       .PARAMETER Resume
         Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
       
+      .PARAMETER Repaint
+      Switch. The Repaint parameter is included but not used for this function. This is used on other Fluxor commands such as Get-FluxCompute and Get-FluxIOPS.
+
       .PARAMETER MaxSupressionWindow
         Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
 
@@ -93,7 +100,7 @@ Function Get-FluxSummary {
     
       #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml"). This parameter is not supported on Core Editions of PowerShell.
       [Parameter(ParameterSetName='Default')]
-      [ValidateScript({Test-Path $_ -Type File})]
+      [ValidateScript({Test-Path $_ -PathType Leaf})]
       [string]$CredentialPath,
 
       #String. Optionally, enter a user for connecting to vCenter Server. This is exclusive of the PSCredential options.
@@ -113,7 +120,7 @@ Function Get-FluxSummary {
 
       #String. Optionally, provide the path to save the outputted results such as $HOME or "$HOME/myfluxLP"
       [Parameter(ParameterSetName='Default')]
-      [ValidateScript({Test-Path $_ -Type Container})]
+      [ValidateScript({Test-Path $_ -PathType Container})]
       [string]$OutputPath,
 
       #Switch. Optionally, return native vSphere stat objects instead of line protocol.
@@ -129,6 +136,11 @@ Function Get-FluxSummary {
       [Parameter(ParameterSetName='Default')]
       [switch]$Logging,
     
+      #String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+      [Parameter(ParameterSetName='Default')]
+      [ValidateScript({Test-Path $_ -PathType Container})]
+      [string]$LogFolder = $HOME,
+
       #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
       [Parameter(ParameterSetName='Default')]
       [ValidateRange(0,120)]
@@ -141,6 +153,10 @@ Function Get-FluxSummary {
       #Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
       [Parameter(ParameterSetName='Resume Set')]
       [switch]$Resume,
+
+      #Switch. The Repaint parameter is included but not used for this function. This is used on other Fluxor commands such as Get-FluxCompute and Get-FluxIOPS.
+      [Parameter(ParameterSetName='Default')]
+      [switch]$Repaint,
       
       #Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
       [Parameter(ParameterSetName='Default')]
@@ -158,19 +174,19 @@ Function Get-FluxSummary {
 
         ## Handle PowerShell transcript Logging
         If($Logging){
-          [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like $HOME/logs
+          [string]$LogDir              = $LogFolder
           [string]$LogName             = 'flux-summary-ps-transcript'                  #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
           [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day
         }
         
         ## Output file name leaf (only used when OutputPath is populated)
-        [string]$statLeaf              = 'flux-summary'                                #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
+        [string]$statLeaf              = 'flux_summary'                                #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
         
         ## Handle spaces in virtual machine names
         [string]$DisplayNameSpacer     = '\ '                                          #We perform a replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
         
         ## Handle Credential from disk by hard-coded path
-        [string]$vcCredentialPath      = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+        [string]$vcCredentialPath      = "$HOME\CredsVcProd.enc.xml"                   #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
       
         ## Handle plain text credential
         If($Strict -eq $false){
@@ -296,13 +312,16 @@ Function Get-FluxSummary {
               If($CredentialPath){
                 $Credential = Get-FluxCredential -Path $CredentialPath
               }
-              Elseif(Test-Path -Path $vcCredentialPath -ErrorAction SilentlyContinue){
+              Elseif(Test-Path -Path $vcCredentialPath -PathType Leaf -ErrorAction Ignore){
                 $Credential = Get-FluxCredential -Path $vcCredentialPath
+              }
+              Else{
+                Write-Verbose -Message 'No credential from disk available, trying more options.'
               }
             }
           }
     
-          ## Consume PSCredential, if we have it
+          ## Consume PSCredential, if we have it by now
           If($Credential){
             try {
               $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
@@ -365,218 +384,218 @@ Function Get-FluxSummary {
       ## Announce collection start
       Write-Verbose -Message ('Beginning summary collection on {0}' -f $Server)
 
-    ## Array to hold result objects
-    If(-Not($OutputPath)){
-        $Script:report = @()
-    }
-    Else{
-      ## Handle output directory, if needed.
-      $Script:strPath = Join-Path -Path $OutputPath -ChildPath $statLeaf
-      If(-Not(Test-Path -Path $Script:strPath -PathType Container)){
-        Write-Verbose -Message ('Creating output directory for stat collection at {0}' -f $Script:strPath)
-        try{
-          $null = New-Item -ItemType Directory -Path $Script:strPath -Confirm:$false -Force -WarningAction SilentlyContinue -ErrorAction Stop
-        }
-        catch{
-          Write-Warning -Message ('Failed to create required folder at {0}!' -f $Script:strPath)
-          throw ('{0}' -f $_.Exception.Message)
-        }
-      }
-    }
-
-    If($ReportType -eq 'VM'){
-
-      ## Start script execution timer
-      $vCenterStartDTM = (Get-Date)
-
-      ## Enumerate VM list
-      If($PSv3){
-        try{
-          $VMs = Get-VM -Server $Server -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
-        }
-        catch{
-          Write-Warning -Message 'Problem enumerating one or more virtual machines!'
-          throw
-        }
+      ## Array to hold result objects
+      If(-Not($OutputPath)){
+          $Script:report = @()
       }
       Else{
-        try{
-          $VMs = (Get-VM -Server $Server -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
-        }
-        catch{
-          Write-Warning -Message 'Problem enumerating one or more virtual machines!'
-          throw
-        }
-      }
-        
-      ## Handle PassThru mode
-      If($PassThru){
-        $Script:report += $VMs
-      }
-      Else{
-        ## Handle file output, if needed
-        If($Script:strPath){
-          ## Create empty file
-          [string]$strGuid = New-Guid | Select-Object -ExpandProperty Guid
-          [string]$writeGuid = ('{0}-{1}' -f $statLeaf, $strGuid)
-          [string]$outLeaf = Join-Path -Path $Script:strPath -ChildPath $writeGuid
-          [string]$outFile = ('{0}.txt' -f $outLeaf)
-          $null = New-Item -ItemType File -Path $outFile -Force
-        }
-      
-        ## Handle each virtual machine
-        foreach ($vm in $VMs){
-            
-            ## Handle name
-            [string]$name = ($vm | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
-            
-            ## Handle measurement name
-            [string]$measurement = 'flux.summary.vm'
-              
-            ## Handle general info
-            [int]$memorygb = $vm | Select-Object -ExpandProperty MemoryGB
-            [string]$numcpu = $vm | Select-Object -ExpandProperty NumCPU
-            [string]$type = 'VM' #derived
-            [string]$vc = $Server
-            
-            ## Handle value and timestamp
-            [string]$value = $vm.ExtensionData.OverallStatus
-            [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
-            
-            ## Build it
-            $MetricsString = ''
-            $MetricsString += ('{0},host={1},memorygb={2},numcpu={3},type={4},vc={5} value="{6}" {7}' -f $measurement, $name, $memorygb, $numcpu, $type, $vc, $value, $timestamp)
-            $MetricsString += "`n"
-        
-            ## Populate object with line protocol
-            If(-Not($OutputPath)){
-              $Script:report += $MetricsString
-            }
-            Else{
-                ## Populate output file
-                Try {
-                  $null = Add-Content -Path $outFile -Value $MetricsString -Force -Confirm:$false
-                }
-                Catch {
-                  Write-Warning -Message ('Problem writing {0} for {1} to file {2} at {3}' -f ($measurement), ($name), $outFile, (Get-Date))
-                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                }
-            }
-        } #End Foreach
-
-        ## Announce status of object or output file
-        If(-Not($OutputPath)){
-          If($report){
-            Write-Verbose -Message 'Running in object mode; Data points collected successfully!'
+        ## Handle output directory, if needed.
+        $Script:strPath = Join-Path -Path $OutputPath -ChildPath $statLeaf
+        If(-Not(Test-Path -Path $Script:strPath -PathType Container)){
+          Write-Verbose -Message ('Creating output directory for stat collection at {0}' -f $Script:strPath)
+          try{
+            $null = New-Item -ItemType Directory -Path $Script:strPath -Confirm:$false -Force -WarningAction SilentlyContinue -ErrorAction Stop
           }
-          Else{
-            Write-Warning -Message 'Problem collecting one or more data points!'
+          catch{
+            Write-Warning -Message ('Failed to create required folder at {0}!' -f $Script:strPath)
+            throw ('{0}' -f $_.Exception.Message)
+          }
+        }
+      }
+
+      If($ReportType -eq 'VM'){
+
+        ## Start script execution timer
+        $vCenterStartDTM = (Get-Date)
+
+        ## Enumerate VM list
+        If($PSv3){
+          try{
+            $VMs = Get-VM -Server $Server -ErrorAction Stop | Where-Object {$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+          }
+          catch{
+            Write-Warning -Message 'Problem enumerating one or more virtual machines!'
+            throw
           }
         }
         Else{
-          If(Test-Path -Path $outFile -PathType Leaf){
-            Write-Verbose -Message ('Write succeeded: {0}' -f $outFile)
+          try{
+            $VMs = (Get-VM -Server $Server -ErrorAction Stop).Where{$_.PowerState -eq 'PoweredOn'} | Sort-Object -Property Name
+          }
+          catch{
+            Write-Warning -Message 'Problem enumerating one or more virtual machines!'
+            throw
           }
         }
+          
+        ## Handle PassThru mode
+        If($PassThru){
+          $Script:report += $VMs
+        }
+        Else{
+          ## Handle file output, if needed
+          If($Script:strPath){
+            ## Create empty file
+            [string]$strGuid = New-Guid | Select-Object -ExpandProperty Guid
+            [string]$writeGuid = ('{0}-{1}' -f $statLeaf, $strGuid)
+            [string]$outLeaf = Join-Path -Path $Script:strPath -ChildPath $writeGuid
+            [string]$outFile = ('{0}.txt' -f $outLeaf)
+            $null = New-Item -ItemType File -Path $outFile -Force
+          }
         
-        ## Runtime Summary
-        $vCenterEndDTM = (Get-Date)
-        $vmCount = ($VMs | Measure-Object).count
-        $ElapsedTotal = ($vCenterEndDTM-$vCenterStartDTM).totalseconds
+          ## Handle each virtual machine
+          foreach ($vm in $VMs){
+              
+              ## Handle name
+              [string]$name = ($vm | Select-Object -ExpandProperty Name) -replace ' ',$DisplayNameSpacer
+              
+              ## Handle measurement name
+              [string]$measurement = 'flux.summary.vm'
+                
+              ## Handle general info
+              $memorygb = ('{0:0.###}' -f ($vm | Select-Object -ExpandProperty MemoryGB))
+              $numcpu = ('{0:0.###}' -f ($vm | Select-Object -ExpandProperty NumCPU))
+              [string]$type = 'VM' #derived
+              [string]$vc = $Server
+              
+              ## Handle value and timestamp
+              [string]$value = $vm.ExtensionData.OverallStatus
+              [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
+              
+              ## Build it
+              $MetricsString = ''
+              $MetricsString += ('{0},host={1},memorygb={2},numcpu={3},type={4},vc={5} value="{6}" {7}' -f $measurement, $name, $memorygb, $numcpu, $type, $vc, $value, $timestamp)
+              $MetricsString += "`n"
+          
+              ## Populate object with line protocol
+              If(-Not($OutputPath)){
+                $Script:report += $MetricsString
+              }
+              Else{
+                  ## Populate output file
+                  Try {
+                    $null = Add-Content -Path $outFile -Value $MetricsString -Force -Confirm:$false
+                  }
+                  Catch {
+                    Write-Warning -Message ('Problem writing {0} for {1} to file {2} at {3}' -f ($measurement), ($name), $outFile, (Get-Date))
+                    Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                  }
+              }
+          } #End Foreach
 
-        ## Show per VM runtimes if, Verbose mode
-        If($stats){
-          If($PSCmdlet.MyInvocation.BoundParameters['Verbose']){
-            Write-Verbose -Message ('Elapsed Processing Time: {0} seconds' -f ($ElapsedTotal))
-            If($vmCount -gt 1) {
-              $TimePerVM = $ElapsedTotal / $vmCount
-              Write-Verbose -Message ('Processing Time Per VM: {0} seconds' -f ($TimePerVM))
+          ## Announce status of object or output file
+          If(-Not($OutputPath)){
+            If($report){
+              Write-Verbose -Message 'Running in object mode; Data points collected successfully!'
+            }
+            Else{
+              Write-Warning -Message 'Problem collecting one or more data points!'
+            }
+          }
+          Else{
+            If(Test-Path -Path $outFile -PathType Leaf){
+              Write-Verbose -Message ('Write succeeded: {0}' -f $outFile)
+            }
+          }
+          
+          ## Runtime Summary
+          $vCenterEndDTM = (Get-Date)
+          $vmCount = ($VMs | Measure-Object).count
+          $ElapsedTotal = ($vCenterEndDTM-$vCenterStartDTM).totalseconds
+
+          ## Show per VM runtimes if, Verbose mode
+          If($stats){
+            If($PSCmdlet.MyInvocation.BoundParameters['Verbose']){
+              Write-Verbose -Message ('Elapsed Processing Time: {0} seconds' -f ($ElapsedTotal))
+              If($vmCount -gt 1) {
+                $TimePerVM = $ElapsedTotal / $vmCount
+                Write-Verbose -Message ('Processing Time Per VM: {0} seconds' -f ($TimePerVM))
+              } #End If
             } #End If
           } #End If
-        } #End If
-      } #End Else
-    } #End If
-    
-    If($ReportType -eq 'VMHost'){
+        } #End Else
+      } #End If
       
-      If($PSv3){
-        $VMHosts = Get-VMHost -Server $Server | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
-      }
-      Else{
-        $VMHosts = (Get-VMHost -Server $Server).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
-      }
-      
-      ## Handle PassThru Mode
-      If($PassThru){
-        $Script:report += $stats
-      }
-      Else{
-        ## Handle file output, if needed
-        If($Script:strPath){
-          ## Create empty file
-          [string]$strGuid = New-Guid | Select-Object -ExpandProperty Guid
-          [string]$writeGuid = ('{0}-{1}' -f $statLeaf, $strGuid)
-          [string]$outLeaf = Join-Path -Path $Script:strPath -ChildPath $writeGuid
-          [string]$outFile = ('{0}.txt' -f $outLeaf)
-          $null = New-Item -ItemType File -Path $outFile -Force
-        }
-         
-        ## Iterate through ESXi Host list
-        foreach($esx in $VMHosts){
-            
-            ## Handle name
-            [string]$name = $esx | Select-Object -ExpandProperty Name
-            
-            ## Handle measurement name
-            [string]$measurement = 'flux.summary.vmhost'
-              
-            ## Handle general info
-            [int]$memorygb = $esx | Select-Object -ExpandProperty MemoryTotalGB
-            [string]$numcpu = $esx | Select-Object -ExpandProperty NumCPU
-            [string]$type = 'VMHost' #derived
-            [string]$vc = $Server
-            
-            ## Handle value and timestamp
-            [string]$value = $esx.ExtensionData.OverallStatus
-            [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000  #nanoseconds since Unix epoch
-
-            ## Build it
-            $MetricsString = ''
-            $MetricsString += ('{0},host={1},memorygb={2},numcpu={3},type={4},vc={5} value="{6}" {7}' -f $measurement, $name, $memorygb, $numcpu, $type, $vc, $value, $timestamp)
-            $MetricsString += "`n"
-          
-            ## Populate object with line protocol
-            If(-Not($OutputPath)){
-              $Script:report += $MetricsString
-            }
-            Else{
-                ## Populate output file
-                Try{
-                  $null = Add-Content -Path $outFile -Value $MetricsString -Force -Confirm:$false
-                }
-                Catch{
-                  Write-Warning -Message ('Problem writing {0} for {1} to file {2} at {3}' -f ($measurement), ($name), $outFile, (Get-Date))
-                  Write-Warning -Message ('{0}' -f $_.Exception.Message)
-                }
-            } #End Else
-        } #End foreach
+      If($ReportType -eq 'VMHost'){
         
-        ## Announce status of object or output file
-        If(-Not($OutputPath)){
-          If($report){
-            Write-Verbose -Message 'Running in object mode; Data points collected successfully!'
-          }
-          Else{
-            Write-Warning -Message 'Problem collecting one or more data points!'
-          }
+        If($PSv3){
+          $VMHosts = Get-VMHost -Server $Server | Where-Object {$_.State -eq 'Connected'} | Sort-Object -Property Name
         }
         Else{
-          If(Test-Path -Path $outFile -PathType Leaf){
-            Write-Verbose -Message ('Write succeeded: {0}' -f $outFile)
-          }
+          $VMHosts = (Get-VMHost -Server $Server).Where{$_.State -eq 'Connected'} | Sort-Object -Property Name
         }
-      } #End Else
-    } #End If
+        
+        ## Handle PassThru Mode
+        If($PassThru){
+          $Script:report += $stats
+        }
+        Else{
+          ## Handle file output, if needed
+          If($Script:strPath){
+            ## Create empty file
+            [string]$strGuid = New-Guid | Select-Object -ExpandProperty Guid
+            [string]$writeGuid = ('{0}-{1}' -f $statLeaf, $strGuid)
+            [string]$outLeaf = Join-Path -Path $Script:strPath -ChildPath $writeGuid
+            [string]$outFile = ('{0}.txt' -f $outLeaf)
+            $null = New-Item -ItemType File -Path $outFile -Force
+          }
+          
+          ## Iterate through ESXi Host list
+          foreach($esx in $VMHosts){
+              
+              ## Handle name
+              [string]$name = $esx | Select-Object -ExpandProperty Name
+              
+              ## Handle measurement name
+              [string]$measurement = 'flux.summary.vmhost'
+                
+              ## Handle general info
+              [int]$memorygb = $esx | Select-Object -ExpandProperty MemoryTotalGB
+              [string]$numcpu = $esx | Select-Object -ExpandProperty NumCPU
+              [string]$type = 'VMHost' #derived
+              [string]$vc = $Server
+              
+              ## Handle value and timestamp
+              [string]$value = $esx.ExtensionData.OverallStatus
+              [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000  #nanoseconds since Unix epoch
+
+              ## Build it
+              $MetricsString = ''
+              $MetricsString += ('{0},host={1},memorygb={2},numcpu={3},type={4},vc={5} value="{6}" {7}' -f $measurement, $name, $memorygb, $numcpu, $type, $vc, $value, $timestamp)
+              $MetricsString += "`n"
+            
+              ## Populate object with line protocol
+              If(-Not($OutputPath)){
+                $Script:report += $MetricsString
+              }
+              Else{
+                  ## Populate output file
+                  Try{
+                    $null = Add-Content -Path $outFile -Value $MetricsString -Force -Confirm:$false
+                  }
+                  Catch{
+                    Write-Warning -Message ('Problem writing {0} for {1} to file {2} at {3}' -f ($measurement), ($name), $outFile, (Get-Date))
+                    Write-Warning -Message ('{0}' -f $_.Exception.Message)
+                  }
+              } #End Else
+          } #End foreach
+          
+          ## Announce status of object or output file
+          If(-Not($OutputPath)){
+            If($report){
+              Write-Verbose -Message 'Running in object mode; Data points collected successfully!'
+            }
+            Else{
+              Write-Warning -Message 'Problem collecting one or more data points!'
+            }
+          }
+          Else{
+            If(Test-Path -Path $outFile -PathType Leaf){
+              Write-Verbose -Message ('Write succeeded: {0}' -f $outFile)
+            }
+          }
+        } #End Else
+      } #End If
   } #End Process
     
   End {

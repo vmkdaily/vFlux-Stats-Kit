@@ -7,7 +7,9 @@ Function Invoke-FluxCLI {
 
       .NOTES
         Script:    Invoke-FluxCLI.ps1
+        Module:    This function is part of the Fluxor module
         Author:    Mike Nisk
+        Website:   Check out our contributors, issues, and docs for the vFlux-Stats-Kit at https://github.com/vmkdaily/vFlux-Stats-Kit/
         Requires:  An existing InfluxDB installation on the local system (we require the influx binary)
         Tested on: PowerShell CoreCLR 6.0 and 6.1 On Ubuntu 16.04 LTS
 

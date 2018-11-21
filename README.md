@@ -21,7 +21,7 @@ The Fluxor module gathers very basic stats and is intended for you to extend.
 However, if you just want a ready-made kit, check out the following items.
 
 #### vSAN
-We support basic virtual machine disk performance for vSAN (we return last hour). For greater detail, see the free sexigraf appliance (deployed as OVA or from ISO):
+The free sexigraf appliance (deployed as OVA or from ISO):
 
 [http://www.sexigraf.fr/](http://www.sexigraf.fr/)
 
@@ -115,17 +115,18 @@ read-only account when in doubt. Also, check with your InfoSec
 team to ensure that you find the best option (of the many we offer)
 for credential handling with the Fluxor module.
 
-#### SSPI / Passthrough (`Strict` parameter)
+#### SSPI / Passthrough (`Strict` parameter `$true`)
 To use passthrough authentication leave the `Strict` parameter set to $true (the default).
 
     $iops = Get-FluxIOPS -Server $vc
+    Write-FluxIOPS -Server $vc -InputObject $iops
 
 <br>
 
-#### Using the plain text value in script
+#### Using the plain text value in script (`Strict` parameter `$false`)
 Set `Strict` to `$false` to use the plain text value in the script. If using the plain text option (`-Strict:$false`) remember to use it on the `Get` and `Write` functions of the Fluxor module.
 
-    $stats = Get-FluxCompute -Strict:$false
+    Get-FluxCompute -Server $vc -Strict:$false | Write-FluxCompute -Server $influx -Strict:$false
 
 <br>
 
@@ -188,15 +189,15 @@ Use `Get-Command` (or alias `gcm`) to see the available cmdlets.
 
     CommandType Name               Version Source
     ----------- ----               ------- ------
-    Function    Get-FluxCompute    1.0.0.7 Fluxor
-    Function    Get-FluxCrontab    1.0.0.7 Fluxor
-    Function    Get-FluxIOPS       1.0.0.7 Fluxor
-    Function    Get-FluxSummary    1.0.0.7 Fluxor
-    Function    Invoke-FluxCLI     1.0.0.7 Fluxor
-    Function    New-FluxCredential 1.0.0.7 Fluxor
-    Function    Write-FluxCompute  1.0.0.7 Fluxor
-    Function    Write-FluxIOPS     1.0.0.7 Fluxor
-    Function    Write-FluxSummary  1.0.0.7 Fluxor
+    Function    Get-FluxCompute    1.0.0.9 Fluxor
+    Function    Get-FluxCrontab    1.0.0.9 Fluxor
+    Function    Get-FluxIOPS       1.0.0.9 Fluxor
+    Function    Get-FluxSummary    1.0.0.9 Fluxor
+    Function    Invoke-FluxCLI     1.0.0.9 Fluxor
+    Function    New-FluxCredential 1.0.0.9 Fluxor
+    Function    Write-FluxCompute  1.0.0.9 Fluxor
+    Function    Write-FluxIOPS     1.0.0.9 Fluxor
+    Function    Write-FluxSummary  1.0.0.9 Fluxor
 
 
 <br>
@@ -236,8 +237,7 @@ This means you have at least one or more InfluxDB databases created (i.e. `compu
 
 <br>
 
-> Tip: The technique shown (using a variable) is for high performance. If you want to pipe
-you can also `Get-FluxCompute | Write-FluxCompute`.
+> Tip: If you want to pipe you can also `Get-FluxCompute | Write-FluxCompute`
 
 <br>
 

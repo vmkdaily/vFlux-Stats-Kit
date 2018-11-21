@@ -8,7 +8,9 @@ Function Get-FluxCrontab {
         
       .NOTES
         Script:   Get-FluxCrontab.ps1
+        Module:   This function is part of the Fluxor module
         Author:   Mike Nisk
+        Website:  Check out our contributors, issues, and docs for the vFlux-Stats-Kit at https://github.com/vmkdaily/vFlux-Stats-Kit/
         Tested:   PowerShell Core 6.x on Ubuntu LTS 16.04
 
       .PARAMETER Name
@@ -57,8 +59,6 @@ Function Get-FluxCrontab {
       > 19500 19500  |   \_ /bin/sh -c ~/stat-runner-iops.ps1
       > 19502 19500  |       \_ /snap/powershell/11/opt/powershell/pwsh /home/fluxor/stat-runner-iops.ps1
         19494   991  \_ /usr/sbin/CRON -f
-
-
 
   #>
 

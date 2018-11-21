@@ -1,4 +1,4 @@
-﻿#requires -Module VMware.Vimautomation.Core
+﻿#requires -Modules VMware.Vimautomation.Core, VMware.VimAutomation.Storage
 Function Get-FluxIOPS {
 
   <#
@@ -6,17 +6,20 @@ Function Get-FluxIOPS {
       .DESCRIPTION
         Gathers VMware vSphere virtual machine disk performance stats. By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects instead of line protocol, use the PassThru switch. Also see the sibling cmdlet Write-FluxIOPS to populate InfluxDB with data points collected here.
         
-        This cmdlet understands NFS, VMFS and vSAN and gathers the appropriate stat types accordingly. Also see the sibling cmdlet Write-FluxIOPS to populate the InfluxDB database with the data points collected here.
+        This function understands NFS, VMFS and vSAN and gathers the appropriate stat types accordingly. Also see the sibling cmdlet Write-FluxIOPS to populate the InfluxDB database with the data points collected here.
+
+        By default, this function returns realtime stats with a MaxSample of 1 by default. To get last hour use the Repaint parameter.
 
         Note: For Compute performance such as cpu, memory and network, see the Get-FluxCompute cmdlet.
 
       .NOTES
-        Script:     Get-FluxIOPS.ps1
-        Author:     Mike Nisk
-        Prior Art:  Based on vFlux Stats Kit
-        Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
-        Supports:   PowerCLI 6.5.4 or later (10.x preferred)
-        Supports:   Windows, Linux, macOS
+        Script:    Get-FluxIOPS.ps1
+        Module:    This function is part of the Fluxor module
+        Author:    Mike Nisk
+        Website:   Check out our contributors, issues, and docs for the vFlux-Stats-Kit at https://github.com/vmkdaily/vFlux-Stats-Kit/
+        Supports:  PSEdition Core 6.x, and PowerShell 3.0 to 5.1
+        Supports:  PowerCLI 6.5.4 or later (11.x or later preferred)
+        Supports:  Windows, Linux, macOS
 
       .PARAMETER Server
         String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
@@ -54,6 +57,9 @@ Function Get-FluxIOPS {
       .PARAMETER Logging
         Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
 
+      .PARAMETER LogFolder
+        String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+
       .PARAMETER MaxJitter 
         Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
 
@@ -63,6 +69,9 @@ Function Get-FluxIOPS {
       .PARAMETER Resume
         Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
       
+      .PARAMETER Repaint
+      Switch. Optionally, activate this switch to gather and write all stats for the past Hour.
+
       .PARAMETER MaxSupressionWindow
         Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
 
@@ -78,8 +87,7 @@ Function Get-FluxIOPS {
       $vc = 'vcsa01.lab.local'
       $iops = Get-FluxIOPS -Server $vc
 
-      This example gathered stats from the $vc vcenter server, and returned the output to screen.
-      Because credentials were not provided, the script used passthrough / SSPI.
+      This example gathered stats from the $vc vcenter server, and returned the output to screen. Because credentials were not provided, the script used passthrough / SSPI.
 
       .EXAMPLE
       $credsVC = Get-Credential administrator@vsphere.local
@@ -90,29 +98,29 @@ Function Get-FluxIOPS {
       .EXAMPLE
       Get-FluxIOPS -Server $vc -ShowStats
 
-      This example shows additional info on screen.
+      This example shows additional info on screen. Or, you can just do $stats = Get-FluxIOPS -Server $vc; $stats[0] to review the first stat instead of using ShowStats.
 
       .EXAMPLE
       Get-FluxIOPS -OutputPath $HOME -Verbose
       cat $home/fluxstat/fluxstat*.txt | more
 
-      This example collected stats and wrote them to the specified directory $HOME.
+      This example collected stats and wrote them to the specified directory $HOME. Writing output to file is not a popular or recommended choice.
       
       .EXAMPLE
       Get-FluxIOPS | Write-FluxIOPS
 
-      This example collected IOPS stats and wrote them to InfluxDB by taking the object returned from Get-FluxIOPS and piping to Write-FluxIOPS. See the next example for preferred strict syntax (no piping).
+      This example collected IOPS stats and wrote them to InfluxDB by taking the object returned from Get-FluxIOPS and piping to Write-FluxIOPS. Also, see the next example for preferred strict syntax (no piping).
 
       .EXAMPLE
-      $stats = Get-FluxIOPS
-      Write-FluxIOPS -InputObject $stats
+      $stats = Get-FluxIOPS -Server $vc
+      Write-FluxIOPS -InputObject $stats -Server 'myinfluxserver'
 
       Get the stats and write them to InfluxDB using variable (more performant than the pipeline in our case).
 
       .EXAMPLE
       1..15 | % { $stats = Get-FluxIOPS; Write-FluxIOPS -InputObject $stats; sleep 20 }
 
-      Gather 5 minutes of stats. Good for initial testing and populating the InfluxDB.
+      In this example we do not specify Server as we expect that is setup already. Then, we gather 5 minutes of stats. This is good for initial testing and populating the InfluxDB database.
 
   #>
 
@@ -130,7 +138,7 @@ Function Get-FluxIOPS {
     
       #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml"). This parameter is not supported on Core Editions of PowerShell.
       [Parameter(ParameterSetName='Default')]
-      [ValidateScript({Test-Path $_ -Type File})]
+      [ValidateScript({Test-Path $_ -PathType Leaf})]
       [string]$CredentialPath,
 
       #String. Optionally, enter a user for connecting to vCenter Server. This is exclusive of the PSCredential options.
@@ -148,7 +156,7 @@ Function Get-FluxIOPS {
       
       #String. Optionally, provide the path to save the outputted results (i.e. $HOME). Whatever path you choose, we create a folder inside it to hold the collected stats.
       [Parameter(ParameterSetName='Default')]
-      [ValidateScript({Test-Path $_ -Type Container})]
+      [ValidateScript({Test-Path $_ -PathType Container})]
       [string]$OutputPath,
     
       #Switch. Optionally, return native vSphere stat objects instead of line protocol.
@@ -172,6 +180,11 @@ Function Get-FluxIOPS {
       [Parameter(ParameterSetName='Default')]
       [switch]$Logging,
       
+      #String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+      [Parameter(ParameterSetName='Default')]
+      [ValidateScript({Test-Path $_ -PathType Container})]
+      [string]$LogFolder = $HOME,
+
       #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
       [Parameter(ParameterSetName='Default')]
       [ValidateRange(0,120)]
@@ -184,6 +197,10 @@ Function Get-FluxIOPS {
       #Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
       [Parameter(ParameterSetName='Resume Set')]
       [switch]$Resume,
+
+      #Switch. Optionally, activate this switch to gather and write all stats for the past Hour.
+      [Parameter(ParameterSetName='Default')]
+      [switch]$Repaint,
       
       #Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
       [Parameter(ParameterSetName='Default')]
@@ -201,19 +218,19 @@ Function Get-FluxIOPS {
       
       ## Handle PowerShell transcript Logging
       If($Logging){
-        [string]$LogDir              = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
+        [string]$LogDir              = $LogFolder
         [string]$LogName             = 'flux-iops-ps-transcript'                     #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
         [string]$dt                  = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day
       }
       
       ## Output file name leaf (only used when OutputPath is populated)
-      [string]$statLeaf              = 'fluxstat'                                    #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
+      [string]$statLeaf              = 'flux_iops'                                   #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
       
       ## Handle spaces in virtual machine names
       [string]$DisplayNameSpacer     = '\ '                                          #We perform a -replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
       
       ## Handle Credential from disk by hard-coded path
-      [string]$vcCredentialPath      = "$HOME/CredsLabVC.enc.xml"                    #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+      [string]$vcCredentialPath      = "$HOME\CredsVcProd.enc.xml"                   #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
       
       ## Handle plain text credential
       If($Strict -eq $false){
@@ -346,13 +363,16 @@ Function Get-FluxIOPS {
               If($CredentialPath){
                 $Credential = Get-FluxCredential -Path $CredentialPath
               }
-              Elseif(Test-Path -Path $vcCredentialPath -ErrorAction SilentlyContinue){
+              Elseif(Test-Path -Path $vcCredentialPath -PathType Leaf -ErrorAction Ignore){
                 $Credential = Get-FluxCredential -Path $vcCredentialPath
+              }
+              Else{
+                Write-Verbose -Message 'No credential from disk available, trying more options.'
               }
             }
           }
           
-          ## Consume PSCredential, if we have it
+          ## Consume PSCredential, if we have it by now
           If($Credential){
             try {
               $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
@@ -556,16 +576,14 @@ Function Get-FluxIOPS {
           $null = New-Item -ItemType File -Path $outFile -Force
         }
         
-        ## Collect stats (requires virtual machine uptime of 1 hour so we 'Continue' instead of 'throw')
-        try{
-          $stats = Get-Stat -Entity $BlockVMs -Stat $BlockStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue
+        ## Gather Block VM stats
+        If($Repaint){
+          $stats = Get-Stat -Entity $BlockVMs -Stat $BlockStatTypes -Start ((Get-Date).AddHours(-1)) -ErrorAction SilentlyContinue
         }
-        catch{
-          If($error.Exception.Message){
-            Write-Warning -Message ('{0}' -f $_.Exception.Message)
-          }
+        Else{
+          $stats = Get-Stat -Entity $BlockVMs -Stat $BlockStatTypes -Realtime -MaxSamples 1 -ErrorAction SilentlyContinue
         }
-        
+
         ## Handle PassThru mode
         If($PassThru){
           $Script:report += $stats
@@ -595,9 +613,18 @@ Function Get-FluxIOPS {
               [string]$unit = $stat.Unit
               [string]$vc = $Server
               
-              ## Handle value and timestamp
+              ## Handle value
               $value = $stat.Value
-              [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
+              
+              ## Handle timestamp
+              If($null -ne $stat.TimeStamp -and $Repaint){
+                $stamp = (Get-Date -Date $stat.TimeStamp)
+                $stampUTC = $stamp.ToUniversalTime()
+                [long]$timestamp = ([datetime]($stampUTC)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #event time in Unix epoch
+              }
+              Else{
+                [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #current time in Unix epoch
+              }
               
               ## Build it. VMFS may or may not have instance, so we handle both.
               If(-Not($instance) -or ($instance -eq '')) {
@@ -628,14 +655,14 @@ Function Get-FluxIOPS {
                   }
               }
 
-              ## View it
+              ## Handle ShowStats
               If($ShowStats){
                   If(-Not($PSCmdlet.MyInvocation.BoundParameters['Verbose'])) {
                       Write-Output -InputObject ('Measurement: {0}' -f $measurement)
                       Write-Output -InputObject ('Value: {0}' -f $value)
                       Write-Output -InputObject ('Name: {0}' -f $Name)
                       Write-Output -InputObject ('Unix Timestamp: {0}' -f $timestamp)
-                      Write-Output -InputObject ''
+                      Write-Output -InputObject ('Local time: {0}' -f (Get-Date -Format O))
                   }
                   Else {
                     #verbose
@@ -643,9 +670,10 @@ Function Get-FluxIOPS {
                     Write-Verbose -Message ('Value: {0}' -f $value)
                     Write-Verbose -Message ('Name: {0}' -f $Name)
                     Write-Verbose -Message ('Unix Timestamp: {0}' -f $timestamp)
-                } #End Else verbose
+                    Write-Verbose -Message ('Local time: {0}' -f (Get-Date -Format O))
+                  } #End Else verbose
               } #End If showstats
-          } #End foreach block vm
+          } #End foreach block vm stat
           
           ## Announce status of object or output file
           If(-Not($OutputPath)){
@@ -676,28 +704,24 @@ Function Get-FluxIOPS {
             $null = New-Item -ItemType File -Path $outFile -Force
           }
         
-          ## Gather NFS stats (requires virtual machine uptime of 1 hour so we 'Continue' instead of 'throw')
+          ## Gather NFS stats
           If($PSv3){
-            try{
-            $stats = Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue | Where-Object { $_.Instance -ne ''}
+            If($Repaint){
+              $stats = Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Start ((Get-Date).AddHours(-1)) -ErrorAction SilentlyContinue | Where-Object { $_.Instance -ne ''}
             }
-            catch{
-              If($error.Exception.Message){
-                Write-Warning -Message ('{0}' -f $_.Exception.Message)
-              }
+            Else{
+              $stats = Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction SilentlyContinue | Where-Object { $_.Instance -ne ''}
             }
           }
           Else{
-            try{
-              $stats = (Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue).Where{$_.Instance -ne ''}
+            If($Repaint){
+              $stats = (Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Start ((Get-Date).AddHours(-1)) -ErrorAction SilentlyContinue).Where{$_.Instance -ne ''}
             }
-            catch{
-              If($error.Exception.Message){
-                Write-Warning -Message ('{0}' -f $_.Exception.Message)
-              }
+            Else{
+              $stats = (Get-Stat -Entity $NfsVMs -Stat $NfsStatTypes -Realtime -MaxSamples 1 -ErrorAction SilentlyContinue).Where{$_.Instance -ne ''}
             }
           }
-          
+
           ## Handle PassThru mode
           If($PassThru){
             $Script:report += $stats
@@ -728,9 +752,18 @@ Function Get-FluxIOPS {
               [string]$unit = $stat.Unit
               [string]$vc = $Server
               
-              ## Handle value and timestamp
+              ## Handle value
               $value = $stat.Value
-              [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
+              
+              ## Handle timestamp
+              If($null -ne $stat.TimeStamp -and $Repaint){
+                $stamp = (Get-Date -Date $stat.TimeStamp)
+                $stampUTC = $stamp.ToUniversalTime()
+                [long]$timestamp = ([datetime]($stampUTC)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #event time in Unix epoch
+              }
+              Else{
+                [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #current time in Unix epoch
+              }
               
               ## Build it
               $MetricsString = ''
@@ -751,14 +784,14 @@ Function Get-FluxIOPS {
                     Write-Warning -Message ('{0}' -f $_.Exception.Message)
                   }
               }
-              
-              ## View it
+              ## Handle ShowStats
               If($ShowStats){
                 If(-Not($PSCmdlet.MyInvocation.BoundParameters['Verbose'])) {
                   Write-Output -InputObject ('Measurement: {0}' -f $measurement)
                   Write-Output -InputObject ('Value: {0}' -f $value)
                   Write-Output -InputObject ('Name: {0}' -f $Name)
                   Write-Output -InputObject ('Unix Timestamp: {0}' -f $timestamp)
+                  Write-Output -InputObject ('Local time: {0}' -f (Get-Date -Format O))
                   Write-Output -InputObject ''
                 }
                 Else {
@@ -767,9 +800,10 @@ Function Get-FluxIOPS {
                   Write-Verbose -Message ('Value: {0}' -f $value)
                   Write-Verbose -Message ('Name: {0}' -f $Name)
                   Write-Verbose -Message ('Unix Timestamp: {0}' -f $timestamp)
+                  Write-Verbose -Message ('Local time: {0}' -f (Get-Date -Format O))
                 } #End Else
               } #End If showstats
-            } #End foreach stat
+            } #End foreach nfs vm stat
             
             ## Announce status of object or output file
             If(-Not($OutputPath)){
@@ -800,13 +834,21 @@ Function Get-FluxIOPS {
             $null = New-Item -ItemType File -Path $outFile -Force
           }
         
-          ## Gather stats
-          try{
-            $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -Start (Get-Date).AddMinutes(-59) -ErrorAction Continue
+          ## Gather vSAN stats
+          If((Get-Module -ListAvailable -Name 'VMware.PowerCLI').Version -ge '11.0.0.0'){
+            If($Repaint){
+              $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -PredefinedTimeRange LastHour -ErrorAction Continue
+            }
+            Else{
+              $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -PredefinedTimeRange Last5Minutes -ErrorAction Continue
+            }
           }
-          catch{
-            If($error.Exception.Message){
-                Write-Warning -Message ('{0}' -f $_.Exception.Message)
+          Else{
+            If($Repaint){
+              $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -StartTime ((Get-Date).AddHours(-1)) -ErrorAction Continue
+            }
+            Else{
+              $stats = Get-VsanStat -Entity $vsanVMs -Name $vSanStatTypes -StartTime ((Get-Date).AddMinutes(-5)) -ErrorAction Continue
             }
           }
           
@@ -836,10 +878,19 @@ Function Get-FluxIOPS {
                 [string]$unit = $stat.Unit
                 [string]$vc = $Server
                 
-                ## Handle value and timestamp
+                ## Handle value
                 $value = $stat.Value
-                [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
-  
+                
+                ## Handle timestamp
+                If($null -ne $stat.TimeStamp -and $Repaint){
+                  $stamp = (Get-Date -Date $stat.TimeStamp)
+                  $stampUTC = $stamp.ToUniversalTime()
+                  [long]$timestamp = ([datetime]($stampUTC)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #event time in Unix epoch
+                }
+                Else{
+                  [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #current time in Unix epoch
+                }
+              
                 ## Build it
                 If(-Not($instance) -or ($instance -eq '')) {
                   #Do not include instance
@@ -868,8 +919,27 @@ Function Get-FluxIOPS {
                       Write-Warning -Message ('{0}' -f $_.Exception.Message)
                     }
                 }
-            } #End foreach stat
-            
+                ## Handle ShowStats
+                If($ShowStats){
+                  If(-Not($PSCmdlet.MyInvocation.BoundParameters['Verbose'])) {
+                    Write-Output -InputObject ('Measurement: {0}' -f $measurement)
+                    Write-Output -InputObject ('Value: {0}' -f $value)
+                    Write-Output -InputObject ('Name: {0}' -f $Name)
+                    Write-Output -InputObject ('Unix Timestamp: {0}' -f $timestamp)
+                    Write-Output -InputObject ('Local time: {0}' -f (Get-Date -Format O))
+                    Write-Output -InputObject ''
+                  }
+                  Else {
+                    #verbose
+                    Write-Verbose -Message ('Measurement: {0}' -f $measurement)
+                    Write-Verbose -Message ('Value: {0}' -f $value)
+                    Write-Verbose -Message ('Name: {0}' -f $Name)
+                    Write-Verbose -Message ('Unix Timestamp: {0}' -f $timestamp)
+                    Write-Verbose -Message ('Local time: {0}' -f (Get-Date -Format O))
+                  } #End Else
+                } #End If showstats
+            } #End foreach vSAN vm stat
+              
             ## Announce status of object or output file
             If(-Not($OutputPath)){
               If($report){

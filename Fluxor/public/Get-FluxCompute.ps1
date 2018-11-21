@@ -1,4 +1,4 @@
-﻿#requires -Module VMware.Vimautomation.Core
+﻿#requires -Modules VMware.Vimautomation.Core
 Function Get-FluxCompute {
 
   <#
@@ -6,15 +6,18 @@ Function Get-FluxCompute {
       .DESCRIPTION
         Gathers VMware vSphere 'Compute' performance stats such as cpu, memory and network from virtual machines or ESXi hosts.  By default, the output is InfluxDB line protocol returned as an object. To output to file instead of returning objects, use the OutputPath parameter. To return pure vSphere stat objects (instead of line protocol), use the PassThru switch. Also see the sibling cmdlet Write-FluxCompute to populate InfluxDB with data points collected here.
 
+        We return realtime stats with a MaxSamples of 1 by default. To get last hour use the Repaint parameter. 
+
         Note: For disk performance, see the Get-FluxIOPS cmdlet.
 
       .NOTES
-        Script:     Get-FluxCompute.ps1
-        Author:     Mike Nisk
-        Prior Art:  Based on vFlux Stats Kit
-        Supports:   PSEdition Core 6.x, and PowerShell 3.0 to 5.1
-        Supports:   PowerCLI 6.5.4 or later (10.x preferred)
-        Supports:   Windows, Linux, macOS
+        Script:    Get-FluxCompute.ps1
+        Module:    This function is part of the Fluxor module
+        Author:    Mike Nisk
+        Website:   Check out our contributors, issues, and docs for the vFlux-Stats-Kit at https://github.com/vmkdaily/vFlux-Stats-Kit/
+        Supports:  PSEdition Core 6.x, and PowerShell 3.0 to 5.1
+        Supports:  PowerCLI 6.5.4 or later (11.x or later preferred)
+        Supports:  Windows, Linux, macOS
 
       .PARAMETER Server
         String. The IP Address or DNS name of exactly one vCenter Server machine. For IPv6, enclose address in square brackets, for example [fe80::250:56ff:feb0:74bd%4].
@@ -49,6 +52,9 @@ Function Get-FluxCompute {
       .PARAMETER Logging
         Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
 
+      .PARAMETER LogFolder
+        String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+
       .PARAMETER MaxJitter 
         Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
       
@@ -57,6 +63,9 @@ Function Get-FluxCompute {
       
       .PARAMETER Resume
         Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
+
+      .PARAMETER Repaint
+        Switch. Optionally, activate this switch to gather and write all stats for the past Hour.
       
       .PARAMETER MaxSupressionWindow
         Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
@@ -77,26 +86,23 @@ Function Get-FluxCompute {
       PS C:\> $stats | more
       PS C:\> $stats | Out-GridView
 
-      This example showed how to review the stats collected in the default mode, which returns PowerShell objects.
-      The returned object is an array of crafted line protocol strings including the requisite new line characters.
-      The example shows common techniques for reviewing the returned object output.
+      This example showed how to review the stats collected in the default mode, which returns PowerShell objects. The returned object is an array of crafted line protocol strings including the requisite new line characters. The example shows common techniques for reviewing the returned object output.
     
       .EXAMPLE
-      Get-FluxCompute | Write-FluxCompute
+      Get-FluxCompute -Server $vc| Write-FluxCompute -Server 'myinfluxserver'
 
-      This example collected realtime stats and wrote them to InfluxDB. We do this by taking the object returned from
-      Get-FluxCompute and piping that to the sibling cmdlet Write-FluxCompute, which allows pipeline input for the 
-      InputObject parameter.
+      This example collected realtime stats and wrote them to InfluxDB. We do this by taking the object returned from Get-FluxCompute and piping that to the sibling cmdlet Write-FluxCompute, which allows pipeline input for the InputObject parameter.
 
       .EXAMPLE
-      $stats = Get-FluxCompute
-      Write-FluxCompute -InputObject $stats
+      $stats = Get-FluxCompute -Server $vc
+      Write-FluxCompute -InputObject $stats -Server 'myinfluxserver'
 
       Get the stats and write them to InfluxDB in a more performant way than the pipeline.
       
       .EXAMPLE
       1..15 | % { $stats = Get-FluxCompute; Write-FluxCompute -InputObject $stats; sleep 20 }
-      Gather 5 minutes of stats. Good for initial testing and populating the InfluxDB.
+      
+      In this example we do not specify Server as we expect that is setup already. Then, we gather 5 minutes of stats. This is good for initial testing and populating the InfluxDB database.
       
   #>
 
@@ -114,7 +120,7 @@ Function Get-FluxCompute {
     
       #String. Optionally, provide the string path to a PSCredential on disk (i.e. "$HOME/CredsVcLab.enc.xml"). This parameter is not supported on Core Editions of PowerShell.
       [Parameter(ParameterSetName='Default')]
-      [ValidateScript({Test-Path $_ -Type File})]
+      [ValidateScript({Test-Path $_ -PathType Leaf})]
       [string]$CredentialPath,
 
       #String. Optionally, enter a user for connecting to vCenter Server. This is exclusive of the PSCredential options.
@@ -138,7 +144,7 @@ Function Get-FluxCompute {
     
       #String. Optionally, provide the path to save the outputted results such as $HOME or "$HOME/myfluxLP"
       [Parameter(ParameterSetName='Default')]
-      [ValidateScript({Test-Path $_ -Type Container})]
+      [ValidateScript({Test-Path $_ -PathType Container})]
       [string]$OutputPath,
     
       #Switch. Optionally, return native vSphere stat objects instead of line protocol.
@@ -153,6 +159,11 @@ Function Get-FluxCompute {
       #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
       [Parameter(ParameterSetName='Default')]
       [switch]$Logging,
+
+      #String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+      [Parameter(ParameterSetName='Default')]
+      [ValidateScript({Test-Path $_ -PathType Container})]
+      [string]$LogFolder = $HOME,
       
       #Integer. The maximum time in seconds to offset the start of stat collection. Set to 0 for no jitter or keep the default which jitters for a random time up to MaxJitter. Use this to prevent spikes on localhost when running many jobs.
       [Parameter(ParameterSetName='Default')]
@@ -166,7 +177,11 @@ Function Get-FluxCompute {
       #Switch. Optionally, resume collection if it has been paused with the Supress parameter. Alternatively, wait for MaxSupressionWindow to automatically resume the collection.
       [Parameter(ParameterSetName='Resume Set')]
       [switch]$Resume,
-      
+
+      #Switch. Optionally, activate this switch to gather and write all stats for the past Hour.
+      [Parameter(ParameterSetName='Default')]
+      [switch]$Repaint,
+
       #Integer. The maximum allowed time in minutes to miss collections due to being supressed with the Supress switch. The default is 20.
       [Parameter(ParameterSetName='Default')]
       [int]$MaxSupressionWindow = 20,
@@ -183,19 +198,19 @@ Function Get-FluxCompute {
 
         ## Handle PowerShell transcript Logging
         If($Logging){
-          [string]$LogDir            = $HOME                                           #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
+          [string]$LogDir            = $LogFolder
           [string]$LogName           = 'flux-compute-ps-transcript'                    #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
           [string]$dt                = (Get-Date -Format 'ddMMMyyyy') | Out-String     #Creates one log file per day by default.
         }
         
         ## Output file name leaf (only used when OutputPath is populated)
-        [string]$statLeaf            = 'fluxstat'                                      #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
+        [string]$statLeaf            = 'flux_compute'                                  #If writing to file, this is the leaf of the stat output file. We add a generated guid and append .txt later
         
         ## Handle spaces in virtual machine names
         [string]$DisplayNameSpacer   = '\ '                                            #We perform a replace ' ', $DisplayNameSpacer later in the script. What you enter here is what we replace spaces with. Using '\ ' maintains the spaces, while '_' results in an underscore.
         
         ## Handle Credential from disk by hard-coded path
-        [string]$vcCredentialPath    = "$HOME/CredsLabVC.enc.xml"                      #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+        [string]$vcCredentialPath    = "$HOME\CredsVcProd.enc.xml"                     #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
     
         ## Handle plain text credential
         If($Strict -eq $false){
@@ -204,8 +219,8 @@ Function Get-FluxCompute {
         }
       
         ## stat preferences
-        $VmStatTypes  = 'cpu.usage.average','cpu.usagemhz.average','mem.usage.average','net.usage.average','cpu.ready.summation'  
-        $EsxStatTypes = 'cpu.usage.average','cpu.usagemhz.average','mem.usage.average','net.usage.average','cpu.ready.summation'
+        $VmStatTypes  = @('cpu.usage.average','cpu.usagemhz.average','mem.usage.average','net.usage.average','cpu.ready.summation') 
+        $EsxStatTypes = @('cpu.usage.average','cpu.usagemhz.average','mem.usage.average','net.usage.average','cpu.ready.summation')
         
         #######################################
         ## No need to edit beyond this point
@@ -325,13 +340,16 @@ Function Get-FluxCompute {
                 If($CredentialPath){
                   $Credential = Get-FluxCredential -Path $CredentialPath
                 }
-                Elseif(Test-Path -Path $vcCredentialPath -ErrorAction SilentlyContinue){
+                Elseif(Test-Path -Path $vcCredentialPath -PathType Leaf -ErrorAction Ignore){
                   $Credential = Get-FluxCredential -Path $vcCredentialPath
+                }
+                Else{
+                  Write-Verbose -Message 'No credential from disk available, trying more options.'
                 }
               }
             }
           
-            ## Consume PSCredential, if we have it
+            ## Consume PSCredential, if we have it by now
             If($Credential){
               try {
                 $null = Connect-VIServer -Server $Server -Credential $Credential -WarningAction SilentlyContinue -ErrorAction Stop
@@ -438,16 +456,14 @@ Function Get-FluxCompute {
             }
           }
         
-          ## Get the stats (requires virtual machine uptime of 1 hour so we 'Continue' instead of 'throw')
-          try{
-            $stats = Get-Stat -Entity $VMs -Stat $VMStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue
+          ## Gather virtual machine stats
+          If($Repaint){
+            $stats = Get-Stat -Entity $VMs -Stat $VMStatTypes -Start ((Get-Date).AddHours(-1)) -ErrorAction SilentlyContinue
           }
-          catch{
-            If($error.Exception.Message){
-              Write-Warning -Message ('{0}' -f $_.Exception.Message)
-            }
+          Else{
+            $stats = Get-Stat -Entity $VMs -Stat $VMStatTypes -Realtime -MaxSamples 1 -ErrorAction SilentlyContinue
           }
-        
+
           ## Handle PassThru mode
           If($PassThru){
             $Script:report += $stats
@@ -486,10 +502,19 @@ Function Get-FluxCompute {
                 [string]$unit = $vmStat.Unit
                 [string]$vc = $Server
               
-                ## Handle value and timestamp
+                ## Handle value
                 $value = $vmStat.Value
-                [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
-      
+                
+                ## Handle timestamp
+                If($null -ne $vmStat.TimeStamp -and $Repaint){
+                  $stamp = (Get-Date -Date $vmStat.TimeStamp)
+                  $stampUTC = $stamp.ToUniversalTime()
+                  [long]$timestamp = ([datetime]($stampUTC)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #event time in Unix epoch
+                }
+                Else{
+                  [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #current time in Unix epoch
+                }
+                
                 ## Handle ready stat
                 If($vmStat.MetricID -eq 'cpu.ready.summation') {
                   $ready = [math]::Round($(($vmStat.Value / ($vmStat.IntervalSecs * 1000)) * 100), 2)
@@ -504,7 +529,7 @@ Function Get-FluxCompute {
                   $MetricsString += "`n"
                 }
                 Else {
-                  #With instance (i.e. cpucores, vmnics, etc.)
+                  ## With instance (i.e. cpucores, vmnics, etc.)
                   $MetricsString = ''
                   $MetricsString += ('{0},host={1},instance={2},interval={3},type={4},unit={5},vc={6} value={7} {8}' -f $measurement, $name, $instance, $interval, $type, $unit, $vc, $value, $timestamp)
                   $MetricsString += "`n"
@@ -525,7 +550,7 @@ Function Get-FluxCompute {
                     }
                 }
 
-                ## View it
+                ## Handle ShowStats
                 If($ShowStats){
                     If(-Not($PSCmdlet.MyInvocation.BoundParameters['Verbose'])) {
                       Write-Output -InputObject ''
@@ -533,6 +558,7 @@ Function Get-FluxCompute {
                       Write-Output -InputObject ('Value: {0}' -f $value)
                       Write-Output -InputObject ('Name: {0}' -f $Name)
                       Write-Output -InputObject ('Unix Timestamp: {0}' -f $timestamp)
+                      Write-Output -InputObject ('Local time: {0}' -f (Get-Date -Format O))
                     }
                     Else {
                       #verbose
@@ -541,9 +567,10 @@ Function Get-FluxCompute {
                       Write-Verbose -Message ('Value: {0}' -f $value)
                       Write-Verbose -Message ('Name: {0}' -f $Name)
                       Write-Verbose -Message ('Unix Timestamp: {0}' -f $timestamp)
+                      Write-Verbose -Message ('Local time: {0}' -f (Get-Date -Format O))
                     } #End Else
-                } #End If
-            } #End Foreach
+                } #End If showstats
+            } #End Foreach vm stat
 
             ## Announce status of object or output file
             If(-Not($OutputPath)){
@@ -600,16 +627,14 @@ Function Get-FluxCompute {
             }
           }
         
-          ## Get the stats (requires an entity uptime of 1 hour, so we 'continue' instead of 'throw')
-          try{
-            $stats = Get-Stat -Entity $VMHosts -Stat $EsxStatTypes -Realtime -MaxSamples 1 -ErrorAction Continue
+          ## Gather VMHost stats
+          If($Repaint){
+            $stats = Get-Stat -Entity $VMHosts -Stat $EsxStatTypes -Start ((Get-Date).AddHours(-1)) -ErrorAction SilentlyContinue
           }
-          catch{
-            If($error.Exception.Message){
-              Write-Warning -Message ('{0}' -f $_.Exception.Message)
-            }
+          Else{
+            $stats = Get-Stat -Entity $VMHosts -Stat $EsxStatTypes -Realtime -MaxSamples 1 -ErrorAction SilentlyContinue
           }
-        
+          
           ## Handle PassThru Mode
           If($PassThru){
             $Script:report += $stats
@@ -648,10 +673,19 @@ Function Get-FluxCompute {
                 [string]$unit = $hostStat.Unit
                 [string]$vc = $global:DefaultVIServer
               
-                ## Handle value and timestamp
+                ## Handle value
                 $value = $hostStat.Value
-                [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #nanoseconds since Unix epoch
-
+                
+                ## Handle timestamp
+                If($null -ne $hostStat.TimeStamp -and $Repaint){
+                  $stamp = (Get-Date -Date $hostStat.TimeStamp)
+                  $stampUTC = $stamp.ToUniversalTime()
+                  [long]$timestamp = ([datetime]($stampUTC)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #event time in Unix epoch
+                }
+                Else{
+                  [long]$timestamp = (([datetime]::UtcNow)-(Get-Date -Date '1/1/1970')).TotalMilliseconds * 1000000 #current time in Unix epoch
+                }
+                
                 ## Handle ready stat
                 If($hostStat.MetricID -eq 'cpu.ready.summation') {
                   $ready = [math]::Round($(($hostStat.Value / ($hostStat.IntervalSecs * 1000)) * 100), 2)
@@ -666,7 +700,7 @@ Function Get-FluxCompute {
                   $MetricsString += "`n"
                 }
                 Else{
-                  #With instance (i.e. cpucores, vmnics, etc.)
+                  ## With instance (i.e. cpucores, vmnics, etc.)
                   $MetricsString = ''
                   $MetricsString += ('{0},host={1},instance={2},interval={3},type={4},unit={5},vc={6} value={7} {8}' -f $measurement, $name, $instance, $interval, $type, $unit, $vc, $value, $timestamp)
                   $MetricsString += "`n"
@@ -686,7 +720,28 @@ Function Get-FluxCompute {
                       Write-Warning -Message ('{0}' -f $_.Exception.Message)
                     }
                 } #End Else
-            } #End foreach
+                
+                ## Handle ShowStats
+                If($ShowStats){
+                  If(-Not($PSCmdlet.MyInvocation.BoundParameters['Verbose'])) {
+                    Write-Output -InputObject ''
+                    Write-Output -InputObject ('Measurement: {0}' -f $measurement)
+                    Write-Output -InputObject ('Value: {0}' -f $value)
+                    Write-Output -InputObject ('Name: {0}' -f $Name)
+                    Write-Output -InputObject ('Unix Timestamp: {0}' -f $timestamp)
+                    Write-Output -InputObject ('Local time: {0}' -f (Get-Date -Format O))
+                  }
+                  Else {
+                    #verbose
+                    Write-Verbose -Message ''
+                    Write-Verbose -Message ('Measurement: {0}' -f $measurement)
+                    Write-Verbose -Message ('Value: {0}' -f $value)
+                    Write-Verbose -Message ('Name: {0}' -f $Name)
+                    Write-Verbose -Message ('Unix Timestamp: {0}' -f $timestamp)
+                    Write-Verbose -Message ('Local time: {0}' -f (Get-Date -Format O))
+                  } #End Else
+                } #End If showstats
+            } #End foreach vmhost stat
           
             ## Announce status of object or output file
             If(-Not($OutputPath)){

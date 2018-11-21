@@ -8,11 +8,11 @@ Function Write-FluxCompute {
 
       .NOTES
         Script:        Write-FluxCompute.ps1
-        Prior Art:     Based on vFlux Stats Kit
+        Module:        This function is part of the Fluxor module
         Author:        Mike Nisk
+        Website:       Check out our contributors, issues, and docs for the vFlux-Stats-Kit at https://github.com/vmkdaily/vFlux-Stats-Kit/
         Supports:      Core Editions of PowerShell 6.x and later, and PowerShell 3.0 to 5.1
-        Supports:      Windows, Linux, macOS as clients for collecting and writing stats
-        Supports:      Windows only (and non-core editions of PowerShell) for Credential on disk feature (optional)
+        Supports:      Windows, Linux, macOS
         Known Issues:  InfluxDB needs a PowerShell culture of en-US for InfluxDB writes that are float (i.e. 97.5)
         
       .PARAMETER Server
@@ -31,7 +31,7 @@ Function Write-FluxCompute {
       String. The name of the InfluxDB database to write to.
 
       .PARAMETER InputObject
-      Object. A PowerShell object to write to InfluxDB. The InputObject parameter requires strict InluxDB line protocol syntax such as that returned by Get-FluxCompute.
+      Object. One or more PowerShell objects to write to InfluxDB. This should be an array of line protocol. The InputObject parameter requires InluxDB line protocol syntax such as that returned by Get-FluxCompute.
       
       .PARAMETER Throttle
       Switch. Optionally, activate the Throttle switch to limit total InfluxDB connections to 2 for this runtime. By default we close the connection after each write, so this is not needed. Using the Throttle switch is slightly more elegant than the default, and is recommended for power users. The benefit would be that instead of closing all connections from client to InfluxDB, we simply limit the maximum to 2.
@@ -45,11 +45,14 @@ Function Write-FluxCompute {
       .PARAMETER Logging
       Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
 
+      .PARAMETER LogFolder
+        String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+
       .PARAMETER PassThru
       Switch. Optionally, return output (if any) from the web cmdlet write operation. There should be no output on successful writes.
 
       .PARAMETER Strict
-      Boolean. Prevents fall-back to hard-coded script values for login credential if any.
+      Boolean. Prevents fall-back to hard-coded script values for InfluxDB login, if any.
 
       .EXAMPLE
       Write-FluxCompute -InputObject $stats
@@ -59,7 +62,7 @@ Function Write-FluxCompute {
   #>
 
     [CmdletBinding()]
-    param (
+    param(
     
       #String. The IP Address or DNS name of exactly one InfluxDB Server machine (or localhost).
       [String]$Server,
@@ -82,10 +85,10 @@ Function Write-FluxCompute {
       #String. The name of the InfluxDB database to write to.
       [string]$Database,
 
-      #Object. Exactly one PowerShell object to write to InfluxDB. This should be an array of line protocol.
+      #Object. One or more PowerShell objects to write to InfluxDB. This should be an array of line protocol.
       [Parameter(Mandatory,ValueFromPipeline=$true)]
       [Alias('Stat')]
-      [PSObject]$InputObject,
+      [PSObject[]]$InputObject,
 
       #Switch. Optionally, activate the throttle switch to throttle total InfluxDB connections to 2 for this runtime. Only activate if having issues (i.e. first write works, and second one fails).
       [switch]$Throttle,
@@ -99,11 +102,17 @@ Function Write-FluxCompute {
       #Boolean. Optionally, activate this switch to enable PowerShell transcript logging.
       [switch]$Logging,
 
+      #String. The path to the folder to save PowerShell transcript logs. The default is $HOME.
+      [Parameter(ParameterSetName='Default')]
+      [ValidateScript({Test-Path $_ -PathType Container})]
+      [string]$LogFolder = $HOME,
+
       #Switch. Optionally, return output (if any) from the web cmdlet write operation. There should be no output on successful writes.
       [switch]$PassThru,
       
       #Boolean. By default this is $true. The Strict parameter prevents fall-back to hard-coded script values for login to the InfluxDB Server. Set Strict to $false at runtime to consume the plain text values in the script.
       [bool]$Strict = $true
+      
     )
     
     Begin{
@@ -119,14 +128,14 @@ Function Write-FluxCompute {
       $InfluxStruct = New-Object -TypeName PSObject -Property @{
           InfluxDbServer        = 'localhost'                                   #IP Address, DNS Name, or 'localhost'. Alternatively, populate the Server parameter at runtime.
           InfluxDbPort          = 8086                                          #The default for InfluxDB is 8086. Alternatively, populate the Port parameter at runtime.
-          InfluxDbName          = 'compute'                                     #To follow my examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI if you have not already. To access the cli, SSH to your server and type influx.
+          InfluxDbName          = 'compute'                                     #To follow the examples, set to 'compute' here and run "CREATE DATABASE compute" from Influx CLI if you have not already. To access the cli, SSH to your server and type influx.
           InfluxDbUser          = 'esx'                                         #This value is ignored in Strict mode. To follow the examples, set to 'esx' here and run "CREATE USER esx WITH PASSWORD esx WITH ALL PRIVILEGES" from Influx CLI. Not needed if PSCredential is provided.
           InfluxDbPassword      = 'esx'                                         #This value is ignored in Strict mode. To follow the examples, set to 'esx' here [see above example to create InfluxDB user and set password at the same time]. Not needed if PSCredential is provided.
-          InfluxCredentialPath  = "$HOME/CredsInfluxDB.enc.xml"                 #Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
+          InfluxCredentialPath  = "$HOME\CredsInfluxDB.enc.xml"                 #Optionally, enter a path like "$HOME/CredsInfluxDB.enc.xml". Not supported on Core editions of PowerShell. This value is ignored if the Credential or CredentialPath parameters are populated. Optionally, enter the Path to encrypted xml Credential file on disk. To create a PSCredential on disk see "help New-FluxCredential".
       }
 
       ## Logging (only used if Logging switch is activated)
-      [string]$LogDir           = $HOME                                         #PowerShell transcript logging location.  Optionally, set to something like "$HOME/logs" or similar.
+      [string]$LogDir           = $LogFolder
       [string]$LogName          = 'fluxcompute-ps-transcript'                   #PowerShell transcript name, if any. This is the leaf of the name only; We add extension and date later.
       [string]$dt               = (Get-Date -Format 'ddMMMyyyy') | Out-String   #Creates one log file per day.
     
@@ -138,10 +147,7 @@ Function Write-FluxCompute {
       If($Server){
           $InfluxStruct.InfluxDbServer = $Server
       }
-      Else{
-        $Server = $InfluxStruct.InfluxDbServer
-      }
-        
+
       ## Handle credential from disk
       If(!$Credential -and !$User){
         If($IsCoreCLR){
@@ -151,7 +157,7 @@ Function Write-FluxCompute {
           If($CredentialPath){
             $Credential = Get-FluxCredential -Path $CredentialPath
           }
-          Elseif(Test-Path -Path $InfluxStruct.InfluxCredentialPath -ea 0){
+          Elseif($null -ne $InfluxStruct.InfluxCredentialPath -and ($InfluxStruct.InfluxCredentialPath).length -gt 0){
             $Credential = Get-FluxCredential -Path $InfluxStruct.InfluxCredentialPath
           }
           Else{
@@ -209,28 +215,30 @@ Function Write-FluxCompute {
           'Authorization' = $authheader
       }
       
-      ## Handle Rest parameters
-      $sParamRest = @{
-          'Headers'     = $headers
-          'Uri'         = $uri
-          'Method'      = 'POST'
-          'Body'        = $InputObject
-          'Verbose'     = $ShowRestActivity
-          'ErrorAction' = 'Stop'
-      }
+      foreach($obj in $InputObject){
+        ## Handle Rest parameters
+        $sParamRest = @{
+            'Headers'     = $headers
+            'Uri'         = $uri
+            'Method'      = 'POST'
+            'Body'        = $obj
+            'Verbose'     = $ShowRestActivity
+            'ErrorAction' = 'Stop'
+        }
 
-      ## Write it
-      Try {
-          $result = (Invoke-RestMethod @sParamRest)
-      }
-      Catch {
-          Write-Warning -Message 'Problem writing object to InfluxDB!'
-          Write-Warning -Message ('{0}' -f $_.Exception.Message)
-          throw
-      }
+        ## Write it
+        Try {
+            $result = (Invoke-RestMethod @sParamRest)
+        }
+        Catch {
+            Write-Warning -Message 'Problem writing object to InfluxDB!'
+            Write-Warning -Message ('{0}' -f $_.Exception.Message)
+            throw
+        }
 
-      ## Close it
-      $null = $ServicePoint.CloseConnectionGroup('')
+        ## Close it
+        $null = $ServicePoint.CloseConnectionGroup('')
+      }
   }
   
   End {
