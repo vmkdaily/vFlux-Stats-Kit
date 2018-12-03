@@ -60,7 +60,7 @@
     -  Added the ability to supress and resume collection with the Supress and Resume parameters. The Fluxor Get-* functions will honor a supress request by creating a lock file; Once the lockfile reaches the default age of 20 minutes (MaxSupressionWindow) we remove it and continue collecting. See the cmdlet help for more detail on these new parameters.
   version 1.0.0.6 - 08Oct2018
     -  Added parameter sets to handle Supress, and Resume functionality on the Get functions (Get-FluxCompute, Get-FluxIOPS, and Get-fluxSummary).
-  version 1.0.0.7 - 12Oct2018 (latest!)
+  version 1.0.0.7 - 12Oct2018
     -  Resolved Issue #12 "Unable to Parse" (thanks @linuxmonkey!).
     -  Added support for consumption of PSCredential from the VMware VICredentialStore for vCenter Server connections. Not supported on Core Editions of PowerShell.
   version 1.0.0.8 skipped. internal testing version
