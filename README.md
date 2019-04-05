@@ -59,15 +59,6 @@ Twitter DM is open. Reach us at:
 
 [https://twitter.com/vmkdaily](https://twitter.com/vmkdaily)
 
-#### Blog / Github
-<br>
-
-[https://vmkdaily.ghost.io/](https://vmkdaily.ghost.io/)
-
-<br>
-
-[https://github.com/vmkdaily](https://github.com/vmkdaily)
-
 <br>
 
 #### OS Requirements
