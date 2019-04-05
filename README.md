@@ -11,10 +11,10 @@ to a local or remote `InfluxDB` time series database. Optionally, output to file
 using the `OutputPath` parameter, or return raw vSphere API objects with the
 `PassThru` parameter.
 
-#### Official Blog Posts
-[Building a Universal vSphere Performance Monitoring Kit with PowerShell Core, InfluxDB, and Grafana on Ubuntu](https://vmkdaily.ghost.io/building-a-universal-vsphere-performance-monitoring-kit-with-powershell-core-influxdb-and-grafana-on-ubuntu/)
+#### Project Wiki
+[Building a Universal vSphere Performance Monitoring Kit with PowerShell Core, InfluxDB, and Grafana on Ubuntu](https://github.com/vmkdaily/vFlux-Stats-Kit/wiki/Building-a-Universal-vSphere-Performance-Monitoring-Kit-with-PowerShell-Core,-InfluxDB,-and-Grafana-on-Ubuntu/)
 
-[Collecting and Visualizing vSphere Performance Metrics with PowerCLI, InfluxDB and Grafana on CentOS 7](https://vmkdaily.ghost.io/collecting-and-visualizing-vsphere-performance-metrics-with-powercli-influxdb-and-grafana-on-centos-7/)
+[Collecting and Visualizing vSphere Performance Metrics with PowerCLI, InfluxDB and Grafana on CentOS 7](https://github.com/vmkdaily/vFlux-Stats-Kit/wiki/Collecting-and-Visualizing-vSphere-Performance-Metrics-with-PowerCLI-InfluxDB-and-Grafana-on-CentOS-7/)
 
 #### Alternatives
 The Fluxor module gathers very basic stats and is intended for you to extend.
